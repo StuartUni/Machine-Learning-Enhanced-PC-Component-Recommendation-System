@@ -6,13 +6,14 @@ Description:
 This script initializes the FastAPI backend for the PC Component Recommendation System.
 It:
 - Sets up CORS middleware for frontend communication.
-- Includes API routes for recommendations and authentication (to be added).
+- Includes API routes for recommendations and authentication.
 - Runs the FastAPI server.
 """
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api.recommend import recommend_router  # ✅ Updated path
+from api.recommend import recommend_router
+from auth.auth import auth_router  # ✅ NEW: Import auth router
 
 app = FastAPI(
     title="PC Component Recommendation API",
@@ -31,6 +32,7 @@ app.add_middleware(
 
 # ✅ Include API routes
 app.include_router(recommend_router, prefix="/api")
+app.include_router(auth_router, prefix="/auth")  # ✅ NEW: Register auth routes
 
 @app.get("/")
 def root():
