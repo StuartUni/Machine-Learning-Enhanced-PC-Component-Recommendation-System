@@ -39,3 +39,11 @@ class BuildRating(BaseModel):
     build_id: str
     rating: int = Field(..., ge=1, le=5, description="Rating from 1 to 5")
     comment: Optional[str] = None
+    
+
+# ✅ Request schema for updating user profile
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+    new_password: Optional[str] = None
+    current_password: Optional[str] = None  # Required only if updating password
