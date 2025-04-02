@@ -2,7 +2,7 @@
 # Student ID: S2336002
 # Date Created: 30/03/2025
 # Description:
-# This script tests a trained TFRS model using Precision@5 and NDCG@5.
+# This script tests a trained TFRS model using Precision@10 and NDCG@10.
 # It loads the saved model, evaluates predictions against known ratings,
 # and prints key performance metrics for deep learning-based recommendations.
 # Debug logging has been added to understand why precision and ndcg may be low.
@@ -74,6 +74,6 @@ def evaluate_model(model, test_data, k=5):
 
 # ✅ Run and print results
 precision, ndcg = evaluate_model(model, test_data, k=10)
-print(f"\n✅ Precision@5: {precision:.4f}")
-print(f"✅ NDCG@5: {ndcg:.4f}")
+print(f"\n✅ Precision@10: {precision:.4f}")
+print(f"✅ NDCG@10: {ndcg:.4f}")
 

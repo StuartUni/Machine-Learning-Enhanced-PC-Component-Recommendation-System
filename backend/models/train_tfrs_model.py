@@ -36,18 +36,16 @@ ratings = ratings.shuffle(1000).batch(32)
 # ✅ User and Build Embedding Models
 user_model = tf.keras.Sequential([
     layers.StringLookup(vocabulary=user_ids, mask_token=None),
-    layers.Embedding(len(user_ids) + 1, 64)
+    layers.Embedding(len(user_ids) + 1, 32)
 ])
 
 build_model = tf.keras.Sequential([
     layers.StringLookup(vocabulary=build_ids, mask_token=None),
-    layers.Embedding(len(build_ids) + 1, 64)
+    layers.Embedding(len(build_ids) + 1, 32)
 ])
 
 # ✅ Rating Prediction Task
 rating_model = tf.keras.Sequential([
-    layers.Dense(128, activation="relu"),
-    layers.Dropout(0.2),
     layers.Dense(64, activation="relu"),
     layers.Dense(1)
 ])
@@ -109,7 +107,7 @@ class BuildRankingModel(tfrs.models.Model):
         
 # ✅ Compile + Train
 model = BuildRankingModel(user_model, build_model, rating_model)
-model.compile(optimizer=tf.keras.optimizers.Adagrad(learning_rate=0.1))
+model.compile(optimizer=tf.keras.optimizers.Adagrad(learning_rate=0.05))
 
 # ✅ Train with history logging
 history = model.fit(ratings, epochs=10)
