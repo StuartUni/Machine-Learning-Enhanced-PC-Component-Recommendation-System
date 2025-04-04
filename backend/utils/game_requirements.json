@@ -1,0 +1,30 @@
+{
+    "Cyberpunk 3776": {
+        "game": "Cyberpunk 3776",
+        "steam_appid": 343170,
+        "minimum_requirements": {
+            "CPU": "Core2Duo Or",
+            "RAM": "Unknown",
+            "GPU": "Hd"
+        },
+        "recommended_requirements": {
+            "CPU": "Intel I5",
+            "RAM": "Unknown",
+            "GPU": "Geforce 660 Or"
+        }
+    },
+    "Cyberpunk 2077": {
+        "game": "Cyberpunk 2077",
+        "steam_appid": 1091500,
+        "minimum_requirements": {
+            "CPU": "Core I7-6700 Or Ryzen 5 1600",
+            "RAM": "12 GB",
+            "GPU": "Geforce Gtx 1060 6Gb Or Radeon Rx 580 8Gb Or Arc A380"
+        },
+        "recommended_requirements": {
+            "CPU": "Core I7-12700 Or Ryzen 7 7800X3D",
+            "RAM": "16 GB",
+            "GPU": "Geforce Rtx 2060 Super Or Radeon Rx 5700 Xt Or Arc A770"
+        }
+    }
+}

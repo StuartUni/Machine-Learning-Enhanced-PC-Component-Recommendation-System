@@ -62,6 +62,13 @@ def extract_game_name(user_query):
     
     return user_query  
 
+def normalize_game_name(name):
+    """
+    Normalizes game name by removing special characters and converting to lowercase.
+    Useful for fuzzy matching.
+    """
+    return re.sub(r"[^a-zA-Z0-9 ]", "", name.lower()).strip()
+
 def get_steam_appid(user_query):
     """Search for the correct Steam App ID while filtering out non-game entities."""
     game_name = extract_game_name(user_query)
@@ -73,35 +80,54 @@ def get_steam_appid(user_query):
     if response.status_code == 200:
         games = response.json().get("applist", {}).get("apps", [])
 
-        # ✅ Filter out non-game entities (e.g., demos, betas, DLCs)
+        # ✅ Filter out non-game entities
         filtered_games = [
             game for game in games if all(x not in game["name"].lower() for x in
                 ["demo", "pack", "soundtrack", "expansion", "dlc", "mod", "beta", "test", "playtest"])
                 and len(game["name"]) > 3
         ]
 
+        # ✅ Normalize all names
         game_dict = {game["name"]: game["appid"] for game in filtered_games}
-        game_names = list(game_dict.keys())
+        normalized_dict = {normalize_game_name(name): name for name in game_dict}
+        normalized_names = list(normalized_dict.keys())
 
-        # ✅ First, look for exact matches
-        for game in game_names:
-            if game.lower() == game_name.lower():
-                print(f"✅ Found Exact Match: {game} (App ID: {game_dict[game]})")
-                return game_dict[game], game
+        # ✅ Normalize search query
+        search_key = normalize_game_name(game_name)
 
-        # ✅ If no exact match, try fuzzy matching
-        best_match, confidence = process.extractOne(game_name, game_names, scorer=fuzz.token_sort_ratio)
-        if confidence >= 75:
-            print(f"✅ Fuzzy Matched Game: {best_match} (Confidence: {confidence}%)")
-            return game_dict[best_match], best_match
+        # 🔍 DEBUG: Show top 3 candidate matches
+        matches = process.extract(search_key, normalized_names, scorer=fuzz.token_set_ratio, limit=3)
+        for match_key, score in matches:
+            original_name = normalized_dict[match_key]
+            print(f"🔍 Candidate Match: {original_name} ({score}%)")
+
+        # ✅ Try exact match first
+        for original_name in game_dict:
+            if normalize_game_name(original_name) == search_key:
+                print(f"✅ Found Exact Match: {original_name} (App ID: {game_dict[original_name]})")
+                return game_dict[original_name], original_name
+
+        # ✅ Fuzzy match if no exact
+        best_match_key, confidence = process.extractOne(search_key, normalized_names, scorer=fuzz.token_set_ratio)
+        best_match_name = normalized_dict[best_match_key]
+
+        if confidence >= 80 and abs(len(best_match_name) - len(game_name)) <= 5:
+            print(f"✅ Fuzzy Matched Game: {best_match_name} (Confidence: {confidence}%)")
+            return game_dict[best_match_name], best_match_name
+
+        print(f"❌ No strong fuzzy match for '{game_name}' (Best: {best_match_name}, Confidence: {confidence}%)")
+        return None, None
 
     print(f"❌ No valid main game found for '{game_name}'.")
     return None, None
 
 def parse_requirements(pc_req):
-    """Extracts system requirements from Steam API HTML."""
-    
-    if isinstance(pc_req, list) and len(pc_req) > 0:
+    """Extracts system requirements from Steam HTML and cleans them up for matching."""
+    from bs4 import BeautifulSoup
+    import html
+
+    # ✅ Format check
+    if isinstance(pc_req, list) and pc_req:
         pc_req = pc_req[0]
 
     if not isinstance(pc_req, str) or pc_req == "Not available":
@@ -109,23 +135,48 @@ def parse_requirements(pc_req):
 
     decoded_html = html.unescape(pc_req)
     soup = BeautifulSoup(decoded_html, "html.parser")
-    text = soup.get_text(separator="\n")
-    lines = [line.strip() for line in text.split("\n") if line.strip()]
+    lines = [line.strip() for line in soup.get_text(separator="\n").split("\n") if line.strip()]
 
     requirements = {"CPU": "Unknown", "RAM": "Unknown", "GPU": "Unknown"}
     prev_line = ""
 
     for line in lines:
-        lower_line = line.lower()
-        if prev_line.startswith("processor") or "cpu" in lower_line:
-            requirements["CPU"] = line.strip() or "Unknown"
-        elif prev_line.startswith("graphics") or "gpu" in lower_line:
-            requirements["GPU"] = line.strip() or "Unknown"
-        elif "memory" in lower_line or "ram" in lower_line:
-            requirements["RAM"] = line.split(":", 1)[-1].strip() or "Unknown"
-        prev_line = lower_line
+        clean_line = line.lower()
+
+        if "processor" in prev_line or "cpu" in clean_line:
+            cleaned = sanitize_component_string(line)
+            requirements["CPU"] = cleaned
+        elif "graphics" in prev_line or "gpu" in clean_line:
+            cleaned = sanitize_component_string(line)
+            requirements["GPU"] = cleaned
+        elif "memory" in clean_line or "ram" in clean_line:
+            ram_match = re.search(r"(\d+)\s*gb", line, re.IGNORECASE)
+            requirements["RAM"] = ram_match.group(1) + " GB" if ram_match else "Unknown"
+
+        prev_line = clean_line
 
     return requirements
+
+def sanitize_component_string(raw_string):
+    """
+    Cleans vague or noisy CPU/GPU strings to make them more matcher-friendly.
+    """
+    raw_string = raw_string.lower()
+
+    # Remove vague/non-model keywords
+    junk_words = [
+        "integrated", "graphics card", "grapics", "grapics card", "hd graphics", "gpu",
+        "better", "equivalent", "or better", "or higher", "recommended", "video card",
+        "compatible", "support", "graphics:", "card:"
+    ]
+    for junk in junk_words:
+        raw_string = raw_string.replace(junk, "")
+
+    # Strip parenthesis and punctuation
+    raw_string = re.sub(r"\(.*?\)", "", raw_string)
+    raw_string = re.sub(r"[^a-zA-Z0-9\s\-\.]", "", raw_string)
+
+    return raw_string.strip().title()
 
 def get_game_system_requirements(game_name, budget):
     """Fetch system requirements from Steam API and match them to components within budget."""
