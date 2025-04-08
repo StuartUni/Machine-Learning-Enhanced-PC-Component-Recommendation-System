@@ -66,63 +66,64 @@ def match_best_component(component_name, dataset, column_name):
     return None
 
 # ✅ Compatibility Matcher
-def match_requirements_to_components(game_requirements, budget):
+def match_requirements_to_components(game_requirements, total_budget):
     cpu_data = load_csv("cpu")
     gpu_data = load_csv("gpu")
 
     matched_components = {"CPU": None, "GPU": None, "RAM": None}
     total_cost = 0
 
-    # ✅ Match CPU
-    if game_requirements.get("CPU", "Unknown") != "Unknown":
-        for cpu in game_requirements["CPU"].split(" or "):
-            match = match_best_component(cpu.strip(), cpu_data, "name")
-            if match:
-                matched_components["CPU"] = match
-                total_cost += match["original_price"]
-                break
+    # ✅ Budget Allocation
+    allocation = {
+        "cpu": 0.25,
+        "gpu": 0.4,
+        "ram": 0.1
+    }
 
-    # ✅ Match GPU
-    if game_requirements.get("GPU", "Unknown") != "Unknown":
-        for gpu in game_requirements["GPU"].split(" or "):
-            match = match_best_component(gpu.strip(), gpu_data, "name")
-            if match:
-                matched_components["GPU"] = match
-                total_cost += match["original_price"]
-                break
+    cpu_budget = total_budget * allocation["cpu"]
+    gpu_budget = total_budget * allocation["gpu"]
 
-    # ✅ Match RAM (with safety)
+    # ✅ Match Best CPU within Budget
+    affordable_cpus = cpu_data[cpu_data["original_price"] <= cpu_budget]
+    if not affordable_cpus.empty:
+        best_cpu = affordable_cpus.sort_values("performance_score", ascending=False).iloc[0].to_dict()
+        matched_components["CPU"] = best_cpu
+        total_cost += best_cpu["original_price"]
+    else:
+        # Fallback to fuzzy match if no CPU within budget
+        if game_requirements.get("CPU", "Unknown") != "Unknown":
+            for cpu in game_requirements["CPU"].split(" or "):
+                match = match_best_component(cpu.strip(), cpu_data, "name")
+                if match:
+                    matched_components["CPU"] = match
+                    total_cost += match["original_price"]
+                    break
+
+    # ✅ Match Best GPU within Budget
+    affordable_gpus = gpu_data[gpu_data["original_price"] <= gpu_budget]
+    if not affordable_gpus.empty:
+        best_gpu = affordable_gpus.sort_values("performance_score", ascending=False).iloc[0].to_dict()
+        matched_components["GPU"] = best_gpu
+        total_cost += best_gpu["original_price"]
+    else:
+        if game_requirements.get("GPU", "Unknown") != "Unknown":
+            for gpu in game_requirements["GPU"].split(" or "):
+                match = match_best_component(gpu.strip(), gpu_data, "name")
+                if match:
+                    matched_components["GPU"] = match
+                    total_cost += match["original_price"]
+                    break
+
+    # ✅ RAM Matching (Still basic for now)
+    required_ram = 16
     if game_requirements.get("RAM", "Unknown") != "Unknown":
         match = re.search(r"(\d+)", game_requirements["RAM"])
-        required_ram = int(match.group(1)) if match else 8
-
-        if required_ram > 128:
-            print(f"⚠️ RAM parsed as {required_ram} GB — defaulting to 16 GB")
-            required_ram = 16
-
-        matched_components["RAM"] = f"{max(8, required_ram)} GB"
-        total_cost += 50  # Approximate RAM price
-
-    # ✅ Downgrade logic if over budget
-    if total_cost > budget:
-        print(f"⚠️ Over budget by ${total_cost - budget:.2f}. Attempting downgrade...")
-
-        # Downgrade GPU
-        if matched_components["GPU"]:
-            cheaper = gpu_data[gpu_data["original_price"] < matched_components["GPU"]["original_price"]]
-            if not cheaper.empty:
-                best = cheaper.sort_values("original_price").iloc[0].to_dict()
-                print(f"⬇️ Downgrading GPU to {best['name']}")
-                total_cost += best["original_price"] - matched_components["GPU"]["original_price"]
-                matched_components["GPU"] = best
-
-        # Downgrade CPU if needed
-        if total_cost > budget and matched_components["CPU"]:
-            cheaper = cpu_data[cpu_data["original_price"] < matched_components["CPU"]["original_price"]]
-            if not cheaper.empty:
-                best = cheaper.sort_values("original_price").iloc[0].to_dict()
-                print(f"⬇️ Downgrading CPU to {best['name']}")
-                total_cost += best["original_price"] - matched_components["CPU"]["original_price"]
-                matched_components["CPU"] = best
+        if match:
+            required_ram = int(match.group(1))
+            if required_ram > 128:
+                print(f"⚠️ RAM parsed as {required_ram} GB — defaulting to 16 GB")
+                required_ram = 16
+    matched_components["RAM"] = f"{max(8, required_ram)} GB"
+    total_cost += total_budget * allocation["ram"]
 
     return matched_components, round(total_cost, 2)

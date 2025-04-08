@@ -26,5 +26,47 @@
             "RAM": "16 GB",
             "GPU": "Geforce Rtx 2060 Super Or Radeon Rx 5700 Xt Or Arc A770"
         }
+    },
+    "ELDEN RING": {
+        "game": "ELDEN RING",
+        "steam_appid": 1245620,
+        "minimum_requirements": {
+            "CPU": "Intel Core I5-8400 Or Amd Ryzen 3 3300X",
+            "RAM": "12 GB",
+            "GPU": "Nvidia Geforce Gtx 1060 3 Gb Or Amd Radeon Rx 580 4 Gb"
+        },
+        "recommended_requirements": {
+            "CPU": "Intel Core I7-8700K Or Amd Ryzen 5 3600X",
+            "RAM": "16 GB",
+            "GPU": "Nvidia Geforce Gtx 1070 8 Gb Or Amd Radeon Rx Vega 56 8 Gb"
+        }
+    },
+    "DOOM Eternal": {
+        "game": "DOOM Eternal",
+        "steam_appid": 782330,
+        "minimum_requirements": {
+            "CPU": "Intel Core I5  3.3 Ghz Or  Or Amd Ryzen 3  3.1 Ghz Or",
+            "RAM": "8 GB",
+            "GPU": "Nvidia Geforce Gtx 1050Ti  Gtx 1060  Gtx 1650  Or Amd Radeon R9 280 Amd Radeon R9 290  Rx 470"
+        },
+        "recommended_requirements": {
+            "CPU": "Intel Core I7-6700K Or  Or Amd Ryzen 7 1800X Or",
+            "RAM": "8 GB",
+            "GPU": "Nvidia Geforce Gtx 1060  Nvidia Geforce 970  Amd Rx 480"
+        }
+    },
+    "Stardew Valley": {
+        "game": "Stardew Valley",
+        "steam_appid": 413150,
+        "minimum_requirements": {
+            "CPU": "2 Ghz",
+            "RAM": "2 GB",
+            "GPU": "256 Mb Video Memory Shader Model 3.0"
+        },
+        "recommended_requirements": {
+            "CPU": "Unknown",
+            "RAM": "Unknown",
+            "GPU": "Unknown"
+        }
     }
 }

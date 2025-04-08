@@ -3,54 +3,26 @@
 # Date Created: 28/03/2025
 # Description:
 # Trains a TensorFlow Recommenders (TFRS) model to learn build preferences from user ratings.
+# Can be reused across scripts or executed directly.
+
 
 import os
-import sqlite3
+import sys
 import pandas as pd
 import tensorflow as tf
 import tensorflow_recommenders as tfrs
 from tensorflow.keras import layers
 from keras.saving import register_keras_serializable
 
-# ✅ Load data from SQLite
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_PATH = os.path.abspath("backend/database/users.db")
-conn = sqlite3.connect(DB_PATH)
-df = pd.read_sql("SELECT user_id, build_id, rating FROM ratings", conn)
-conn.close()
+# ✅ Add backend to sys.path so 'utils' can be resolved when running as standalone
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+BACKEND_DIR = os.path.abspath(os.path.join(CURRENT_DIR, ".."))
+if BACKEND_DIR not in sys.path:
+    sys.path.insert(0, BACKEND_DIR)
 
-# ✅ Prepare unique vocabularies
-user_ids = df["user_id"].astype(str).unique()
-build_ids = df["build_id"].unique()
+# ✅ This import should now work
+from utils.export_ratings_to_csv import export_ratings_to_csv
 
-# ✅ TensorFlow Datasets
-ratings = tf.data.Dataset.from_tensor_slices({
-    "user_id": df["user_id"].astype(str),
-    "build_id": df["build_id"],
-    "rating": df["rating"]
-})
-
-# ✅ Shuffle + batch
-ratings = ratings.shuffle(1000).batch(32)
-
-# ✅ User and Build Embedding Models
-user_model = tf.keras.Sequential([
-    layers.StringLookup(vocabulary=user_ids, mask_token=None),
-    layers.Embedding(len(user_ids) + 1, 32)
-])
-
-build_model = tf.keras.Sequential([
-    layers.StringLookup(vocabulary=build_ids, mask_token=None),
-    layers.Embedding(len(build_ids) + 1, 32)
-])
-
-# ✅ Rating Prediction Task
-rating_model = tf.keras.Sequential([
-    layers.Dense(64, activation="relu"),
-    layers.Dense(1)
-])
-
-# ✅ Custom TFRS model
 @register_keras_serializable()
 class BuildRankingModel(tfrs.models.Model):
     def __init__(self, user_model=None, build_model=None, rating_model=None, **kwargs):
@@ -104,24 +76,61 @@ class BuildRankingModel(tfrs.models.Model):
             build_model=tf.keras.utils.deserialize_keras_object(config["build_model"]),
             rating_model=tf.keras.utils.deserialize_keras_object(config["rating_model"])
         )
-        
-# ✅ Compile + Train
-model = BuildRankingModel(user_model, build_model, rating_model)
-model.compile(optimizer=tf.keras.optimizers.Adagrad(learning_rate=0.05))
 
-# ✅ Train with history logging
-history = model.fit(ratings, epochs=10)
 
-# ✅ Optional: Save training loss plot
-import matplotlib.pyplot as plt
-plt.plot(history.history['loss'])
-plt.title("Training Loss")
-plt.xlabel("Epoch")
-plt.ylabel("Loss")
-plt.savefig("backend/models/tfrs_training_loss.png")
-print("📈 Training loss plot saved to: backend/models/tfrs_training_loss.png")
+def train_model(csv_path, model_output_path):
+    df = pd.read_csv(csv_path)
 
-# ✅ Save model
-model_path = os.path.abspath("backend/models/tfrs_model.keras")
-model.save(model_path)
-print(f"✅ TFRS model saved to: {model_path}")
+    user_ids = df["user_id"].astype(str).unique()
+    build_ids = df["build_id"].unique()
+
+    ratings = tf.data.Dataset.from_tensor_slices({
+        "user_id": df["user_id"].astype(str),
+        "build_id": df["build_id"],
+        "rating": df["rating"]
+    }).shuffle(1000).batch(32)
+
+    user_model = tf.keras.Sequential([
+        layers.StringLookup(vocabulary=user_ids, mask_token=None),
+        layers.Embedding(len(user_ids) + 1, 32)
+    ])
+
+    build_model = tf.keras.Sequential([
+        layers.StringLookup(vocabulary=build_ids, mask_token=None),
+        layers.Embedding(len(build_ids) + 1, 32)
+    ])
+
+    rating_model = tf.keras.Sequential([
+        layers.Dense(64, activation="relu"),
+        layers.Dense(1)
+    ])
+
+    model = BuildRankingModel(user_model, build_model, rating_model)
+    model.compile(optimizer=tf.keras.optimizers.Adagrad(learning_rate=0.05))
+
+    history = model.fit(ratings, epochs=10)
+
+    # Save training plot
+    import matplotlib.pyplot as plt
+    os.makedirs(os.path.dirname(model_output_path), exist_ok=True)
+    plt.plot(history.history['loss'])
+    plt.title("Training Loss")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.savefig("backend/models/tfrs_training_loss.png")
+    print("📈 Training loss plot saved to: backend/models/tfrs_training_loss.png")
+
+    # Save trained model
+    model.save(model_output_path)
+    print(f"✅ TFRS model saved to: {model_output_path}")
+
+
+# ✅ CLI usage support
+if __name__ == "__main__":
+    DB_PATH = os.path.join("backend", "database", "users.db")
+    CSV_PATH = os.path.join("backend", "data", "ratings.csv")
+    MODEL_PATH = os.path.join("backend", "models", "tfrs_model.keras")
+
+    LABELED_PATH = os.path.join("backend", "data", "builds", "labeled_builds.csv")
+    export_ratings_to_csv(DB_PATH, CSV_PATH, LABELED_PATH)
+    train_model(CSV_PATH, MODEL_PATH)
