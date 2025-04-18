@@ -1,0 +1,35 @@
+/* Created by: Stuart Smith
+   Student ID: S2336002
+   Date Created: 2025-04-18
+   Description:
+   Styles for the About page including sections, titles, and layout */
+
+   .about-container {
+    max-width: 800px;
+    margin: 3rem auto;
+    padding: 2rem;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .about-title {
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .about-section {
+    margin-bottom: 2rem;
+  }
+  
+  .about-section h2 {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    color: #007bff;
+  }
+  
+  .about-section p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+  }

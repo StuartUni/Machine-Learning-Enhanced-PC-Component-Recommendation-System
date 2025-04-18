@@ -1,0 +1,173 @@
+/* Created by: Stuart Smith
+   Student ID: S2336002
+   Date Created: 2025-04-17
+   Description:
+   Styles for the Recommender Page - including form, recommendations and saved builds */
+
+   .recommender-container {
+    max-width: 1000px;
+    margin: 3rem auto;
+    padding: 2rem;
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .recommender-title {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 2rem;
+  }
+  
+  .recommender-form label {
+    display: block;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+  }
+  
+  .recommender-form input,
+  .recommender-form select {
+    width: 100%;
+    padding: 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 1rem;
+  }
+  
+  .recommender-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+  
+  .recommender-buttons button {
+    padding: 0.75rem;
+    font-size: 1rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  
+  .btn-recommend {
+    background-color: #007bff;
+    color: white;
+  }
+  .btn-recommend:hover {
+    background-color: #0056b3;
+  }
+  
+  .btn-save {
+    background-color: #28a745;
+    color: white;
+  }
+  .btn-save:hover {
+    background-color: #218838;
+  }
+  
+  .btn-view-saved {
+    background-color: #17a2b8;
+    color: white;
+  }
+  .btn-view-saved:hover {
+    background-color: #117a8b;
+  }
+  
+  .btn-submit-rating {
+    background-color: #ffc107;
+    color: black;
+  }
+  .btn-submit-rating:hover {
+    background-color: #e0a800;
+  }
+  
+  /* ⭐ New Recommended Build Card ⭐ */
+  .recommended-build-card {
+    margin-top: 2rem;
+    background-color: #f0f9ff;
+    padding: 1.5rem;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  
+  .recommended-build-card h3 {
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+  
+  .recommended-build-card p {
+    margin: 0.5rem 0;
+    font-size: 1.1rem;
+  }
+  
+  /* 📦 Saved Builds */
+  .saved-builds-section {
+    margin-top: 2rem;
+    background: #f8fafc;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  
+  .build-card {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #ffffff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+  }
+  
+  .build-card p {
+    margin: 0.5rem 0;
+    font-size: 1.1rem;
+  }
+  
+  .btn-delete-build {
+    background-color: #ef4444;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    margin-top: 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  
+  .btn-delete-build:hover {
+    background-color: #dc2626;
+  }
+  
+  /* 📭 No Saved Builds Message */
+  .no-saved-builds {
+    margin-top: 2rem;
+    text-align: center;
+    font-size: 1.2rem;
+    color: #64748b;
+    padding: 1rem;
+    background-color: #f8fafc;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+  
+  /* 🖥️✨ Side-by-side layout for Recommended Build + Saved Builds */
+  .recommendation-and-saved {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    margin-top: 2rem;
+  }
+  
+  .recommended-build-card,
+  .saved-builds-section {
+    flex: 1 1 45%;
+  }
+  
+  /* 📱 Responsive for Mobile */
+  @media (max-width: 768px) {
+    .recommendation-and-saved {
+      flex-direction: column;
+    }
+  }

@@ -12,7 +12,8 @@ It:
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api.recommend import recommend_router
+# from api.recommend import recommend_router - # ✅ OLD: Importing recommend router
+from api.hybrid import hybrid_router  # ✅ NEW: Import hybrid router
 from auth.auth import auth_router  # ✅ NEW: Import auth router
 
 app = FastAPI(
@@ -24,14 +25,14 @@ app = FastAPI(
 # ✅ Enable CORS (Adjust frontend URLs in future config.py)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # ✅ Include API routes
-app.include_router(recommend_router, prefix="/api")
+app.include_router(hybrid_router, prefix="/api")
 app.include_router(auth_router, prefix="/auth")  # ✅ NEW: Register auth routes
 
 @app.get("/")

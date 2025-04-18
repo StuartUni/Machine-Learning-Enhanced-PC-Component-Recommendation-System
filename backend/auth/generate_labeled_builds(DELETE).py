@@ -6,6 +6,7 @@ import os
 import pandas as pd
 import random
 from itertools import product
+import uuid  # for unique build IDs
 
 # ✅ Paths
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -64,11 +65,15 @@ for _ in range(100):  # Limit to 100 builds for performance
     case = case_df.sample(1).iloc[0]
 
     total_price = (
-        cpu["price"] + gpu["price"] + ram["price"] + mobo["price"] +
-        psu["price"] + cooler["price"] + storage["price"] + case["price"]
+        cpu["original_price"] + gpu["original_price"] + ram["original_price"] + mobo["original_price"] +
+        psu["original_price"] + cooler["original_price"] + storage["original_price"] + case["original_price"]
     )
+    
+    # Create a unique build_id using uuid
+    build_id = str(uuid.uuid4())
 
     build = {
+        "build_id": build_id,  # Add unique build_id
         "cpu_score": cpu["performance_score"],
         "gpu_score": gpu["performance_score"],
         "ram_gb": ram["capacity_gb"] if "capacity_gb" in ram else 16,

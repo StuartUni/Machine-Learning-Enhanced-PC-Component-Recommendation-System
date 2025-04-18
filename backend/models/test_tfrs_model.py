@@ -7,12 +7,20 @@
 # and prints key performance metrics for deep learning-based recommendations.
 # Debug logging has been added to understand why precision and ndcg may be low.
 
+import sys
 import os
 import sqlite3
 import pandas as pd
 import tensorflow as tf
 import tensorflow_recommenders as tfrs
-from backend.models.train_tfrs_model import BuildRankingModel
+
+
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+BACKEND_DIR = os.path.abspath(os.path.join(CURRENT_DIR, ".."))
+if BACKEND_DIR not in sys.path:
+    sys.path.insert(0, BACKEND_DIR)
+    
+from models.train_tfrs_model import BuildRankingModel
 
 # ✅ Paths
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

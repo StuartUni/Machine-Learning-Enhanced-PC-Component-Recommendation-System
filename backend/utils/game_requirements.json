@@ -68,5 +68,33 @@
             "RAM": "Unknown",
             "GPU": "Unknown"
         }
+    },
+    "Eternal": {
+        "game": "Eternal",
+        "steam_appid": 2979520,
+        "minimum_requirements": {
+            "CPU": "Intel Core I3-7100U Or",
+            "RAM": "8 GB",
+            "GPU": "Nvidia Geforce Gtx 1050 Or"
+        },
+        "recommended_requirements": {
+            "CPU": "Intel Core I5-8300H Or",
+            "RAM": "12 GB",
+            "GPU": "Nvidia Geforce Gtx 1650 Or"
+        }
+    },
+    "DOOM": {
+        "game": "DOOM",
+        "steam_appid": 379720,
+        "minimum_requirements": {
+            "CPU": "Intel Core I5-2400Amd Fx-8320 Or",
+            "RAM": "8 GB",
+            "GPU": "Nvidia Gtx 670 2Gbamd Radeon Hd 7870 2Gb Or"
+        },
+        "recommended_requirements": {
+            "CPU": "Intel Core I7-3770Amd Fx-8350 Or",
+            "RAM": "8 GB",
+            "GPU": "Nvidia Gtx 970 4Gbamd Radeon R9 290 4Gb Or"
+        }
     }
 }

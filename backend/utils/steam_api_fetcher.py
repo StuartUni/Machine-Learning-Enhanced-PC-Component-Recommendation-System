@@ -63,14 +63,11 @@ def extract_game_name(user_query):
     return user_query  
 
 def normalize_game_name(name):
-    """
-    Normalizes game name by removing special characters and converting to lowercase.
-    Useful for fuzzy matching.
-    """
-    return re.sub(r"[^a-zA-Z0-9 ]", "", name.lower()).strip()
+    """Lowercase, remove special chars, and simplify spaces."""
+    return re.sub(r"[^a-z0-9 ]", "", name.lower()).strip()
 
 def get_steam_appid(user_query):
-    """Search for the correct Steam App ID while filtering out non-game entities."""
+    """Search for the correct Steam App ID with smart fallback if fuzzy match isn't perfect."""
     game_name = extract_game_name(user_query)
     print(f"🔍 Extracted Game Name: '{game_name}' from Query: '{user_query}'")
 
@@ -80,45 +77,45 @@ def get_steam_appid(user_query):
     if response.status_code == 200:
         games = response.json().get("applist", {}).get("apps", [])
 
-        # ✅ Filter out non-game entities
         filtered_games = [
             game for game in games if all(x not in game["name"].lower() for x in
-                ["demo", "pack", "soundtrack", "expansion", "dlc", "mod", "beta", "test", "playtest"])
+                ["demo", "pack", "soundtrack", "expansion", "dlc", "mod", "beta", "test", "playtest", "campaign", "pass", "bonus", "pre order", "expansion", "trailer", "deluxe edition", "game of the year", "goty", "ultimate edition", "complete edition", "definitive edition", "remastered", "remake", "collection", "bundle", "season pass", "season", "free to play", "free", "early access", "access", "alpha", "beta", "test", "playtest"])
                 and len(game["name"]) > 3
+                and len(game["name"]) <= 50  # ✅ Reasonable name length
+                and "(" not in game["name"]  # ✅ Avoid parentheses which usually mean extras
         ]
 
-        # ✅ Normalize all names
         game_dict = {game["name"]: game["appid"] for game in filtered_games}
-        normalized_dict = {normalize_game_name(name): name for name in game_dict}
-        normalized_names = list(normalized_dict.keys())
+        game_names = list(game_dict.keys())
 
-        # ✅ Normalize search query
-        search_key = normalize_game_name(game_name)
+        # ✅ Normalize names for comparison
+        normalized_query = normalize_game_name(game_name)
+        normalized_games = {normalize_game_name(name): name for name in game_names}
 
-        # 🔍 DEBUG: Show top 3 candidate matches
-        matches = process.extract(search_key, normalized_names, scorer=fuzz.token_set_ratio, limit=3)
-        for match_key, score in matches:
-            original_name = normalized_dict[match_key]
-            print(f"🔍 Candidate Match: {original_name} ({score}%)")
-
-        # ✅ Try exact match first
-        for original_name in game_dict:
-            if normalize_game_name(original_name) == search_key:
+        # ✅ Exact Match Check (normalized)
+        for norm_name, original_name in normalized_games.items():
+            if norm_name == normalized_query:
                 print(f"✅ Found Exact Match: {original_name} (App ID: {game_dict[original_name]})")
                 return game_dict[original_name], original_name
 
-        # ✅ Fuzzy match if no exact
-        best_match_key, confidence = process.extractOne(search_key, normalized_names, scorer=fuzz.token_set_ratio)
-        best_match_name = normalized_dict[best_match_key]
+        # ✅ Fuzzy Match
+        best_match, confidence = process.extractOne(normalized_query, normalized_games.keys(), scorer=fuzz.token_set_ratio)
+        best_match_original = normalized_games[best_match]
 
-        if confidence >= 80 and abs(len(best_match_name) - len(game_name)) <= 5:
-            print(f"✅ Fuzzy Matched Game: {best_match_name} (Confidence: {confidence}%)")
-            return game_dict[best_match_name], best_match_name
+        if confidence >= 75:
+            print(f"✅ Fuzzy Matched Game: {best_match_original} (Confidence: {confidence}%)")
+            return game_dict[best_match_original], best_match_original
 
-        print(f"❌ No strong fuzzy match for '{game_name}' (Best: {best_match_name}, Confidence: {confidence}%)")
+        # ✅ Partial Match as fallback
+        for norm_name, original_name in normalized_games.items():
+            if normalized_query in norm_name:
+                print(f"✅ Partial Match: {original_name}")
+                return game_dict[original_name], original_name
+
+        print(f"❌ No good match for '{game_name}'. Best fuzzy match was '{best_match_original}' ({confidence}%)")
         return None, None
 
-    print(f"❌ No valid main game found for '{game_name}'.")
+    print(f"❌ Steam API unavailable.")
     return None, None
 
 def parse_requirements(pc_req):
