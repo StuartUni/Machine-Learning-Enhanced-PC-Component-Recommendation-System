@@ -1,0 +1,15 @@
+/* Created by: Stuart Smith
+   Student ID: S2336002
+   Date Created: 2025-04-18
+   Description:
+   Styling for the site footer. Simple fixed footer at bottom of page. */
+
+   .site-footer {
+    text-align: center;
+    padding: 1rem;
+    background-color: #f1f1f1;
+    color: #555;
+    font-size: 0.9rem;
+    margin-top: 4rem;
+    border-top: 1px solid #ddd;
+  }

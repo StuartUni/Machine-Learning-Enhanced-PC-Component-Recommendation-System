@@ -19,6 +19,7 @@ import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Recommender from "./pages/Recommender";
 import About from "./pages/About";
+import Footer from "./components/Footer";
 
 import "./styles/App.css";
 
@@ -98,6 +99,8 @@ function App() {
         <Route path="/about" element={<About />} />
       </Routes>
 
+      
+      <Footer />
       <ToastContainer position="bottom-right" />
     </>
   );
