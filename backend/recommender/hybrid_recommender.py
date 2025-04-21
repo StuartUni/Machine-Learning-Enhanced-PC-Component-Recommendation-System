@@ -38,75 +38,6 @@ def calculate_real_total_cost(build: dict) -> float:
             total += part["original_price"]
     return round(total, 2)
 
-# ✅ Clean and finalize build
-# def clean_and_finalize_recommendation(build: dict, budget: float, allocation: dict) -> dict:
-#     if "ram_ddr5_name" in build:
-#         build["ram_name"] = build["ram_ddr5_name"]
-#     elif "ram_ddr4_name" in build:
-#         build["ram_name"] = build["ram_ddr4_name"]
-#     build.pop("ram_ddr4_name", None)
-#     build.pop("ram_ddr5_name", None)
-
-#     build["build_id"] = str(uuid.uuid4())
-
-#     build = fill_missing_components(build, budget, allocation)
-#     total_cost = calculate_real_total_cost(build)
-
-#     # ✅ Build clean frontend-ready dictionary
-#     recommended_build = {
-#         "build_id": build["build_id"],
-#         "cpu_name": build.get("cpu_name", "Unknown"),
-#         "gpu_name": build.get("gpu_name", "Unknown"),
-#         "motherboard_name": build.get("motherboard_name", "Unknown"),
-#         "ram_name": build.get("ram_name", "Unknown"),
-#         "storage_name": build.get("storage_name", "500GB SSD"),
-#         "psu_name": build.get("power_supply_name", "Unknown"),
-#         "case_name": build.get("case_name", "Unknown"),
-#         "cpu_cooler_name": build.get("cpu_cooler_name", "Stock Cooler"),
-#     }
-
-#     # ✅ Fetch real prices dynamically
-#     for part_field, csv_key in {
-#         "cpu": "cpu",
-#         "gpu": "gpu",
-#         "motherboard": "motherboard",
-#         "psu": "power_supply",
-#         "case": "case",
-#     }.items():
-#         df = component_data.get(csv_key)
-#         if df is not None:
-#             match = df[df["name"] == build.get(f"{part_field}_name")]
-#             if not match.empty:
-#                 recommended_build[f"{part_field}_price"] = round(match.iloc[0]["original_price"], 2)
-
-#     # ✅ Special handling for RAM
-#     ram_name = build.get("ram_name")
-#     ram_price = None
-
-#     if ram_name:
-#         ram_ddr5 = component_data.get("ram_ddr5")
-#         ram_ddr4 = component_data.get("ram_ddr4")
-
-#         # Check both datasets
-#         if ram_ddr5 is not None and not ram_ddr5[ram_ddr5["name"] == ram_name].empty:
-#             ram_match = ram_ddr5[ram_ddr5["name"] == ram_name].iloc[0]
-#             ram_price = ram_match["original_price"]
-#         elif ram_ddr4 is not None and not ram_ddr4[ram_ddr4["name"] == ram_name].empty:
-#             ram_match = ram_ddr4[ram_ddr4["name"] == ram_name].iloc[0]
-#             ram_price = ram_match["original_price"]
-
-#         if ram_price is not None:
-#             recommended_build["ram_price"] = round(ram_price, 2)
-
-#     # ✅ Manual fixed storage and cooler prices (optional — could be dynamic later too)
-#     recommended_build["storage_price"] = 50.00
-#     recommended_build["cpu_cooler_price"] = 30.00
-
-#     return {
-#         "recommended_build": recommended_build,
-#         "total_cost": total_cost
-#     }
-
 
 def clean_and_finalize_recommendation(build: dict, budget: float, allocation: dict) -> dict:
     build["build_id"] = str(uuid.uuid4())
@@ -185,9 +116,7 @@ def get_hybrid_recommendation(user_input: dict) -> dict:
         print(f"🛠 Using content-based filtering for non-gaming use case: {query}")
         print(f"🔍 Budget Allocation for {query}: {allocation}")
 
-        # build = recommend_build_from_features(use_case=query, budget=budget, allocation=allocation)
         
-        # cleaned = clean_and_finalize_recommendation(build["build"], budget, allocation)
         build_response = recommend_build_from_features(use_case=query, budget=budget, allocation=allocation)
 
         build = build_response["build"]  # ✅ Extract the actual build
@@ -246,17 +175,7 @@ def get_hybrid_recommendation(user_input: dict) -> dict:
     print(f"🔍 Selected Compatible Parts: {compatible_parts}")
     print(f"🔍 Raw Total Price: {raw_total}")
 
-    # build = {
-    #     "cpu_name": compatible_parts["CPU"]["name"] if compatible_parts.get("CPU") else "Unknown",
-    #     "gpu_name": compatible_parts["GPU"]["name"] if compatible_parts.get("GPU") else "Unknown",
-    #     "motherboard_name": compatible_parts["Motherboard"]["name"] if compatible_parts.get("Motherboard") else "Unknown",
-    #     "ram_name": compatible_parts["RAM"]["name"] if compatible_parts.get("RAM") else "Unknown",
-    #     "power_supply_name": compatible_parts["PSU"]["name"] if compatible_parts.get("PSU") else "Unknown",
-    #     "case_name": compatible_parts["Case"]["name"] if compatible_parts.get("Case") else "Unknown",
-    #     "storage_name": "500GB SSD",
-    #     "cpu_cooler_name": "Stock Cooler"
-    # }
-    
+
     build = compatible_parts
 
     final_cleaned = clean_and_finalize_recommendation(build, budget, allocation)

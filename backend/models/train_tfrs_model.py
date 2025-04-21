@@ -109,14 +109,6 @@ def train_model(csv_path, model_output_path):
 
     history = model.fit(ratings_ds, epochs=10)
 
-    # # Save training loss plot
-    # os.makedirs(os.path.dirname(model_output_path), exist_ok=True)
-    # plt.plot(history.history['loss'])
-    # plt.title("Training Loss")
-    # plt.xlabel("Epoch")
-    # plt.ylabel("Loss")
-    # plt.savefig("/models/tfrs_training_loss.png")
-    # print("📈 Training loss plot saved to: /models/tfrs_training_loss.png")
 
     # 🔍 Evaluate RMSE on the same data
     print("📏 Evaluating RMSE on training ratings...")
