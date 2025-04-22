@@ -3,10 +3,10 @@ __pycache__/
 *.pyc
 
 # SQLite database
-*.db
+# *.db
 
 # Data files
-data/*.csv
+# data/*.csv
 
 # Environment files
 .env
