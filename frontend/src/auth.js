@@ -4,7 +4,7 @@
 // Description:
 // Handles registration and login requests to the FastAPI backend.
 
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = "https://machine-learning-enhanced-pc-component.onrender.com";
 
 export async function registerUser(username, password) {
   const response = await fetch(`${API_BASE_URL}/auth/register`, {
