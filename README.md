@@ -73,8 +73,14 @@ The backend is deployed and publicly accessible:
 **Backend API:** (https://machine-learning-enhanced-pc-component.onrender.com)
 
 
+To access the site: https://machine-learning-enhanced-pc-component-iyr1.onrender.com
 
-The frontend can be manually tested locally, or optionally hosted if needed.
+⚡ Please Note:
+The backend server is hosted on Render's free tier, which may enter sleep mode after periods of inactivity.
+
+As a result, when first accessing the site or submitting a request (e.g., login, registration, recommendation), there may be a brief delay (10–30 seconds) while the server "wakes up."
+
+This is normal behavior for free-tier hosting and should only occur on the first request after a period of idleness.
 
 ---
 ##  Acknowledgments
