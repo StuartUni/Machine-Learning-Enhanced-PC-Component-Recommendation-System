@@ -7,7 +7,7 @@
 // - User registration and login (JWT)
 // - Save, retrieve, rate, and delete multiple user builds (JWT-protected)
 
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = "https://machine-learning-enhanced-pc-component.onrender.com";
 
 /**
  * Sends a POST request to the backend with the given user inputs.
