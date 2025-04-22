@@ -1,6 +1,3 @@
-
-
-
 // Created by: Stuart Smith
 // Student ID: S2336002
 // Date Created: 2025-04-17
@@ -73,12 +70,12 @@ function App() {
 
         <div className="nav-links">
           <Link to="/" className="nav-link">Home</Link>
+          <Link to="/about" className="nav-link">About</Link>
 
           {!user ? (
             <>
               <Link to="/register" className="nav-link">Register</Link>
               <Link to="/login" className="nav-link">Login</Link>
-              <Link to="/about" className="nav-link">About</Link>
             </>
           ) : (
             <>
@@ -99,7 +96,6 @@ function App() {
         <Route path="/about" element={<About />} />
       </Routes>
 
-      
       <Footer />
       <ToastContainer position="bottom-right" />
     </>

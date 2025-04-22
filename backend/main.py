@@ -12,17 +12,15 @@ It:
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-# from api.recommend import recommend_router - # ✅ OLD: Importing recommend router
-from api.hybrid import hybrid_router  # ✅ NEW: Import hybrid router
-from auth.auth import auth_router  # ✅ NEW: Import auth router
-
+from api.hybrid import hybrid_router 
+from auth.auth import auth_router  
 app = FastAPI(
     title="PC Component Recommendation API",
     description="A machine learning-enhanced system for recommending PC components.",
     version="1.0"
 )
 
-# ✅ Enable CORS (Adjust frontend URLs in future config.py)
+#  Enable CORS (Adjust frontend URLs in future config.py)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
@@ -31,9 +29,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ✅ Include API routes
+#  Include API routes
 app.include_router(hybrid_router, prefix="/api")
-app.include_router(auth_router, prefix="/auth")  # ✅ NEW: Register auth routes
+app.include_router(auth_router, prefix="/auth")  
 
 @app.get("/")
 def root():

@@ -1,14 +1,21 @@
-# Created by: Stuart Smith, Student ID: S2336002
-# Date Created: 2025-04-02
-# Description: Handles budget allocation strategies for different use cases (gaming, work, school, etc.)
-
+"""
+Created by: Stuart Smith
+Student ID: S2336002
+Date Created: 2025-04-02
+Description:
+This utility function defines budget allocation strategies for different PC build use cases.
+Features:
+- Provides default budget percentages for CPU, GPU, RAM, motherboard, etc.
+- Supports use cases: gaming, general, work, and school
+- Defaults to 'gaming' allocation if use case is unknown
+"""
 
 def get_budget_allocation(use_case: str) -> dict:
     """
     Returns a dictionary of budget percentages for each component
     based on the specified use case (e.g., gaming, work, school).
     """
-    # ✅ Default to gaming if unknown
+    #  Default to gaming if unknown
     use_case = use_case.lower()
 
     allocations = {

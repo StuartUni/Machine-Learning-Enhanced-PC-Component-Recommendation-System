@@ -1,17 +1,25 @@
-# Created by: Stuart Smith, Student ID: S2336002
-# Date Created: 2025-04-02
-# Description: Uses TF-IDF to match user game queries with existing game requirement entries.
-
+"""
+Created by: Stuart Smith
+Student ID: S2336002
+Date Created: 2025-04-02
+Description:
+This module uses TF-IDF vectorization to match user game queries against a local database of game requirements.
+Features:
+- Loads game minimum requirements from a JSON file
+- Builds a TF-IDF model from game component descriptions
+- Matches user queries to the most similar game using cosine similarity
+- Automatically updates the TF-IDF model if data is missing
+"""
 import os
 import json
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-# ✅ Path to Game Requirements JSON (used by Steam API fetcher)
+#  Path to Game Requirements JSON 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GAME_REQUIREMENTS_FILE = os.path.join(BASE_DIR, "utils", "game_requirements.json")
 
-# ✅ TF-IDF Globals
+#  TF-IDF Globals
 tfidf_vectorizer = TfidfVectorizer(stop_words="english")
 tfidf_matrix = None
 game_names = []
@@ -41,9 +49,9 @@ def update_tfidf_model():
 
     if game_descriptions:
         tfidf_matrix = tfidf_vectorizer.fit_transform(game_descriptions)
-        print(f"✅ TF-IDF Model updated with {len(game_names)} games.")
+        print(f" TF-IDF Model updated with {len(game_names)} games.")
     else:
-        print("⚠️ No game descriptions available for TF-IDF.")
+        print(" No game descriptions available for TF-IDF.")
 
 def find_best_matching_game(user_input):
     """Returns the best matching game name using TF-IDF or None if confidence is too low."""
@@ -60,7 +68,7 @@ def find_best_matching_game(user_input):
     confidence = similarity_scores[best_match_index]
 
     if confidence < 0.3:
-        print("⚠️ TF-IDF confidence too low:", confidence)
+        print(" TF-IDF confidence too low:", confidence)
         return None
 
     return game_names[best_match_index]

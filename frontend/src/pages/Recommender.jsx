@@ -48,6 +48,13 @@ function Recommender() {
     }
   }, [navigate]);
 
+  
+  useEffect(() => {
+    if (token) {
+      handleViewSaved();
+    }
+  }, [token]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -72,8 +79,6 @@ function Recommender() {
         mode: "hybrid",
       });
 
-      console.log("Recommendation received:", recommendation);
-
       setResult(recommendation);
     } catch (err) {
       console.error(err);
@@ -88,17 +93,16 @@ function Recommender() {
       toast.error("You must be logged in to save a build.");
       return;
     }
-  
-    
+
     const alreadySaved = savedBuilds.some(
       (build) => build.build_id === result.recommended_build.build_id
     );
-  
+
     if (alreadySaved) {
       toast.info("⚠️ Build already saved.");
       return;
     }
-  
+
     try {
       const buildToSave = {
         ...result.recommended_build,
@@ -106,8 +110,6 @@ function Recommender() {
       };
       const response = await saveBuild(buildToSave, token);
       toast.success(response.message || "✅ Build saved!");
-  
-      // ✅ Refresh saved builds immediately after saving
       await handleViewSaved();
     } catch {
       toast.error("❌ Failed to save build.");

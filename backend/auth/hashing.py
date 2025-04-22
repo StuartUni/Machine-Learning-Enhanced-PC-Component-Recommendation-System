@@ -20,7 +20,7 @@ class Hasher:
         """
         salt = bcrypt.gensalt()
         hashed_password = bcrypt.hashpw(password.encode("utf-8"), salt)
-        return hashed_password.decode("utf-8")  # Store as a string for DB compatibility
+        return hashed_password.decode("utf-8")  
 
     @staticmethod
     def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -33,14 +33,14 @@ class Hasher:
         """
         return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
 
-# ✅ Testing Hashing Functionality
+#  Testing Hashing Functionality
 if __name__ == "__main__":
     test_password = "securepassword123"
     hashed = Hasher.hash_password(test_password)
-    print(f"🔐 Hashed Password: {hashed}")
+    print(f" Hashed Password: {hashed}")
 
     is_valid = Hasher.verify_password("securepassword123", hashed)
-    print(f"✅ Password Match: {is_valid}")
+    print(f" Password Match: {is_valid}")
 
     is_invalid = Hasher.verify_password("wrongpassword", hashed)
-    print(f"❌ Wrong Password Match: {is_invalid}")
+    print(f" Wrong Password Match: {is_invalid}")

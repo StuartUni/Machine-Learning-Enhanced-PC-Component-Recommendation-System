@@ -26,5 +26,5 @@ export async function loginUser(username, password) {
     throw new Error("Login failed");
   }
 
-  return await response.json(); // includes token
+  return await response.json(); 
 }

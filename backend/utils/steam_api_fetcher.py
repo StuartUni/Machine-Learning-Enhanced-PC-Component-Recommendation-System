@@ -1,30 +1,31 @@
 """
 Created by: Stuart Smith
 Student ID: S2336002
-Date Created: 25/03/2025
+Date Created: 2025-03-25
 Description:
-This script fetches game system requirements from the Steam API.
-It:
-- Extracts game names using fuzzy matching.
-- Retrieves Steam App IDs and fetches system requirements.
-- Parses and formats the extracted requirements.
+This script fetches game system requirements from the Steam API for recommendation purposes.
+Features:
+- Extracts game names using regex matching
+- Retrieves Steam App IDs with fuzzy matching
+- Parses system requirements into CPU, GPU, and RAM fields
+- Saves fetched requirements into a local JSON file
 """
 
-from bs4 import BeautifulSoup
-import requests
-import json
-import time
-import re
-import html
 import os
+import re
+import time
+import json
+import html
+import requests
+from bs4 import BeautifulSoup
 from fuzzywuzzy import process, fuzz
 from utils.component_matcher import match_requirements_to_components
 
-# ✅ Define file path for saving game requirements
+# Define file path for saving game requirements
 GAME_REQUIREMENTS_FILE = os.path.join(os.path.dirname(__file__), "game_requirements.json")
 
 def save_game_requirements(game_name, requirements):
-    """Saves fetched game requirements to JSON for future use."""
+    """Saves fetched game requirements to JSON."""
     if not os.path.exists(GAME_REQUIREMENTS_FILE):
         game_data = {}
     else:
@@ -38,11 +39,9 @@ def save_game_requirements(game_name, requirements):
 
     with open(GAME_REQUIREMENTS_FILE, "w") as f:
         json.dump(game_data, f, indent=4)
-    
-    print(f"✅ Game requirements saved for '{game_name}'.")
 
 def load_game_requirements():
-    """Loads existing game requirements from JSON file."""
+    """Loads existing game requirements from JSON."""
     if os.path.exists(GAME_REQUIREMENTS_FILE):
         try:
             with open(GAME_REQUIREMENTS_FILE, "r") as f:
@@ -52,24 +51,21 @@ def load_game_requirements():
     return {}
 
 def extract_game_name(user_query):
-    """Extracts the most likely game name from a natural language query."""
+    """Extracts likely game name from natural language query."""
     patterns = [r"play (.+)", r"run (.+)", r"for (.+)", r"that can (.+)", r"to (.+)"]
-    
     for pattern in patterns:
         match = re.search(pattern, user_query, re.IGNORECASE)
         if match:
             return match.group(1).strip()
-    
-    return user_query  
+    return user_query
 
 def normalize_game_name(name):
-    """Lowercase, remove special chars, and simplify spaces."""
+    """Normalizes game names for fuzzy matching."""
     return re.sub(r"[^a-z0-9 ]", "", name.lower()).strip()
 
 def get_steam_appid(user_query):
-    """Search for the correct Steam App ID with smart fallback if fuzzy match isn't perfect."""
+    """Finds the best matching Steam App ID using fuzzy matching."""
     game_name = extract_game_name(user_query)
-    print(f"🔍 Extracted Game Name: '{game_name}' from Query: '{user_query}'")
 
     search_url = "https://api.steampowered.com/ISteamApps/GetAppList/v2/"
     response = requests.get(search_url)
@@ -79,51 +75,39 @@ def get_steam_appid(user_query):
 
         filtered_games = [
             game for game in games if all(x not in game["name"].lower() for x in
-                ["demo", "pack", "soundtrack", "expansion", "dlc", "mod", "beta", "test", "playtest", "campaign", "pass", "bonus", "pre order", "expansion", "trailer", "deluxe edition", "game of the year", "goty", "ultimate edition", "complete edition", "definitive edition", "remastered", "remake", "collection", "bundle", "season pass", "season", "free to play", "free", "early access", "access", "alpha", "beta", "test", "playtest"])
-                and len(game["name"]) > 3
-                and len(game["name"]) <= 50  # ✅ Reasonable name length
-                and "(" not in game["name"]  # ✅ Avoid parentheses which usually mean extras
+                ["demo", "pack", "soundtrack", "expansion", "dlc", "mod", "beta", "test", "playtest", "campaign",
+                 "pass", "bonus", "pre order", "expansion", "trailer", "deluxe edition", "game of the year", "goty",
+                 "ultimate edition", "complete edition", "definitive edition", "remastered", "remake", "collection",
+                 "bundle", "season pass", "season", "free to play", "free", "early access", "access", "alpha", "beta",
+                 "test", "playtest"])
+                and 3 < len(game["name"]) <= 50
+                and "(" not in game["name"]
         ]
 
         game_dict = {game["name"]: game["appid"] for game in filtered_games}
         game_names = list(game_dict.keys())
 
-        # ✅ Normalize names for comparison
         normalized_query = normalize_game_name(game_name)
         normalized_games = {normalize_game_name(name): name for name in game_names}
 
-        # ✅ Exact Match Check (normalized)
         for norm_name, original_name in normalized_games.items():
             if norm_name == normalized_query:
-                print(f"✅ Found Exact Match: {original_name} (App ID: {game_dict[original_name]})")
                 return game_dict[original_name], original_name
 
-        # ✅ Fuzzy Match
         best_match, confidence = process.extractOne(normalized_query, normalized_games.keys(), scorer=fuzz.token_set_ratio)
         best_match_original = normalized_games[best_match]
 
         if confidence >= 75:
-            print(f"✅ Fuzzy Matched Game: {best_match_original} (Confidence: {confidence}%)")
             return game_dict[best_match_original], best_match_original
 
-        # ✅ Partial Match as fallback
         for norm_name, original_name in normalized_games.items():
             if normalized_query in norm_name:
-                print(f"✅ Partial Match: {original_name}")
                 return game_dict[original_name], original_name
 
-        print(f"❌ No good match for '{game_name}'. Best fuzzy match was '{best_match_original}' ({confidence}%)")
-        return None, None
-
-    print(f"❌ Steam API unavailable.")
     return None, None
 
 def parse_requirements(pc_req):
-    """Extracts system requirements from Steam HTML and cleans them up for matching."""
-    from bs4 import BeautifulSoup
-    import html
-
-    # ✅ Format check
+    """Parses CPU, GPU, and RAM from Steam requirements HTML."""
     if isinstance(pc_req, list) and pc_req:
         pc_req = pc_req[0]
 
@@ -155,43 +139,38 @@ def parse_requirements(pc_req):
     return requirements
 
 def sanitize_component_string(raw_string):
-    """
-    Cleans vague or noisy CPU/GPU strings to make them more matcher-friendly.
-    """
+    """Cleans raw component description strings."""
     raw_string = raw_string.lower()
 
-    # Remove vague/non-model keywords
     junk_words = [
         "integrated", "graphics card", "grapics", "grapics card", "hd graphics", "gpu",
         "better", "equivalent", "or better", "or higher", "recommended", "video card",
         "compatible", "support", "graphics:", "card:"
     ]
+
     for junk in junk_words:
         raw_string = raw_string.replace(junk, "")
 
-    # Strip parenthesis and punctuation
     raw_string = re.sub(r"\(.*?\)", "", raw_string)
     raw_string = re.sub(r"[^a-zA-Z0-9\s\-\.]", "", raw_string)
 
     return raw_string.strip().title()
 
 def get_game_system_requirements(game_name, budget):
-    """Fetch system requirements from Steam API and match them to components within budget."""
-    
+    """Fetches and parses system requirements for a game from the Steam API."""
     NON_GAMES = ["general", "work", "school", "office", "content creation", "design"]
+
     if game_name.lower() in NON_GAMES:
-        print(f"⚠️ Skipping Steam API request for non-game query: {game_name}")
         return {"error": f"'{game_name}' is not a recognized game."}
 
     appid, matched_name = get_steam_appid(game_name)
     if not appid:
-        print(f"❌ ERROR: Game '{game_name}' not found on Steam.")
         return {"error": f"Game '{game_name}' not found on Steam."}
 
     store_url = f"https://store.steampowered.com/api/appdetails?appids={appid}"
     headers = {"User-Agent": "Mozilla/5.0"}
 
-    time.sleep(2)  # Prevents API rate limits
+    time.sleep(2)  # Respect Steam's API limits
     response = requests.get(store_url, headers=headers)
 
     if response.status_code != 200:
@@ -212,12 +191,12 @@ def get_game_system_requirements(game_name, budget):
     if rec_requirements["CPU"] == "Unknown":
         rec_requirements = parse_requirements(pc_req.get("recommended", "Unknown"))
 
-    game_info = {
+    result = {
         "game": matched_name,
         "steam_appid": appid,
         "minimum_requirements": min_requirements,
         "recommended_requirements": rec_requirements
     }
 
-    save_game_requirements(matched_name, game_info)
-    return game_info
+    save_game_requirements(matched_name, result)
+    return result

@@ -1,10 +1,16 @@
-# Created by: Stuart Smith
-# Student ID: S2336002
-# Date Created: 28/03/2025
-# Description:
-# Trains an SVD collaborative filtering model using user ratings from the database.
-# Evaluates model performance using RMSE, Precision@K, and Recall@K.
-# Saves the trained model for future recommendation use.
+"""
+Created by: Stuart Smith
+Student ID: S2336002
+Date Created: 28/03/2025
+Description:
+This script trains an SVD collaborative filtering model for PC build recommendations.
+Features:
+- Loads user ratings from the SQLite database
+- Prepares the dataset using Surprise library
+- Trains an SVD model for collaborative filtering
+- Evaluates the model using RMSE, Precision@K, and Recall@K metrics
+- Saves the trained SVD model to disk for future use
+"""
 
 import os
 import sqlite3
@@ -15,7 +21,7 @@ from surprise import Dataset, Reader, SVD
 from surprise.model_selection import train_test_split
 from surprise import accuracy
 
-# ✅ Load ratings from SQLite database
+#  Load ratings from SQLite database
 DB_PATH = os.path.join(os.path.dirname(__file__), "..", "database", "users.db")
 
 def load_ratings():
@@ -25,7 +31,7 @@ def load_ratings():
     conn.close()
     return df
 
-# ✅ Precision@K and Recall@K calculation
+#  Precision@K and Recall@K calculation
 def get_top_n(predictions, n=5):
     top_n = defaultdict(list)
     for uid, iid, true_r, est, _ in predictions:
@@ -58,31 +64,31 @@ def precision_recall_at_k(predictions, k=5, threshold=3.5):
 
     return avg_precision, avg_recall
 
-# ✅ Load and prepare dataset
+#  Load and prepare dataset
 df = load_ratings()
 reader = Reader(rating_scale=(1, 5))
 data = Dataset.load_from_df(df[["user_id", "build_id", "rating"]], reader)
 
-# ✅ Train/test split
+#  Train/test split
 trainset, testset = train_test_split(data, test_size=0.2, random_state=42)
 
-# ✅ Train SVD model
+#  Train SVD model
 model = SVD()
 model.fit(trainset)
 
-# ✅ Evaluate performance
+#  Evaluate performance
 predictions = model.test(testset)
 rmse = accuracy.rmse(predictions)
 precision, recall = precision_recall_at_k(predictions, k=5, threshold=3.5)
 
-print(f"\n📊 Evaluation Results:")
-print(f"📈 RMSE: {rmse:.4f}")
-print(f"📈 Precision@5: {precision:.4f}")
-print(f"📈 Recall@5: {recall:.4f}\n")
+print(f"\n Evaluation Results:")
+print(f" RMSE: {rmse:.4f}")
+print(f" Precision@5: {precision:.4f}")
+print(f" Recall@5: {recall:.4f}\n")
 
-# ✅ Save model
+#  Save model
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "svd_model.pkl")
 with open(MODEL_PATH, "wb") as f:
     pickle.dump(model, f)
 
-print(f"✅ SVD model trained and saved to: {MODEL_PATH}")
+print(f" SVD model trained and saved to: {MODEL_PATH}")

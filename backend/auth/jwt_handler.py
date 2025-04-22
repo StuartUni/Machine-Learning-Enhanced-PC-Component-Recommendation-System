@@ -13,15 +13,15 @@ It:
 from datetime import datetime, timedelta
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt  # ✅ Using python-jose for FastAPI integration
+from jose import JWTError, jwt  
 from .database import get_db_connection
 
-# ✅ Secret key and algorithm for JWT
-SECRET_KEY = "your_secret_key_here"  # Consider loading from env in production
+#  Secret key and algorithm for JWT
+SECRET_KEY = "your_secret_key_here"  
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
-# ✅ OAuth2 scheme for extracting token from Authorization header
+#  OAuth2 scheme for extracting token from Authorization header
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 def create_access_token(data: dict):
@@ -52,7 +52,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-    # ✅ Fetch user from DB by username
+    #  Fetch user from DB by username
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM users WHERE username = ?", (username,))

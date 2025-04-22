@@ -1,4 +1,3 @@
-
 """
 Created by: Stuart Smith
 Student ID: S2336002
@@ -13,23 +12,25 @@ Modernized component matcher for PC builds.
 - Adds Case
 - Graceful downgrades if needed
 """
+
 import os
 import pandas as pd
 import re
 from fuzzywuzzy import process, fuzz
 
-# ✅ Paths
+# Paths
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_FOLDER = os.path.join(BASE_DIR, "data")
 
 def load_csv(name):
+    """Load CSV file."""
     path = os.path.join(DATA_FOLDER, f"preprocessed_filtered_{name}.csv")
     if not os.path.exists(path):
-        raise FileNotFoundError(f"❌ Dataset not found: {path}")
+        raise FileNotFoundError(f"Dataset not found: {path}")
     return pd.read_csv(path)
 
-# ✅ Preprocessing for fuzzy matching
 def preprocess_component_name(name):
+    """Normalize component names for fuzzy matching."""
     if not isinstance(name, str):
         return name
     name = name.lower()
@@ -38,8 +39,8 @@ def preprocess_component_name(name):
     name = re.sub(r"[^a-zA-Z0-9\s]", "", name)
     return name.strip()
 
-# ✅ Fuzzy component matcher
 def match_best_component(component_name, dataset, column_name):
+    """Fuzzy match a component."""
     if dataset.empty:
         return None
     dataset["normalized_name"] = dataset[column_name].apply(preprocess_component_name)
@@ -51,11 +52,11 @@ def match_best_component(component_name, dataset, column_name):
             return dataset.iloc[index].to_dict()
     return None
 
-# ✅ Try upgrading components to use spare budget smartly
 def upgrade_build_with_spare_budget(matched, spare_budget, cpu_data, gpu_data, ram_ddr4, ram_ddr5, motherboard_data):
+    """Upgrade build if spare budget allows."""
     upgrades_made = False
 
-    # Upgrade GPU first
+    # Upgrade GPU
     if matched.get("GPU"):
         better_gpus = gpu_data[
             (gpu_data["original_price"] > matched["GPU"]["original_price"]) &
@@ -66,9 +67,8 @@ def upgrade_build_with_spare_budget(matched, spare_budget, cpu_data, gpu_data, r
             spare_budget -= (best_gpu["original_price"] - matched["GPU"]["original_price"])
             matched["GPU"] = best_gpu
             upgrades_made = True
-            print(f"⬆️ Upgraded GPU to {best_gpu['name']}!")
 
-    # Upgrade CPU second
+    # Upgrade CPU
     if matched.get("CPU"):
         better_cpus = cpu_data[
             (cpu_data["original_price"] > matched["CPU"]["original_price"]) &
@@ -79,22 +79,16 @@ def upgrade_build_with_spare_budget(matched, spare_budget, cpu_data, gpu_data, r
             spare_budget -= (best_cpu["original_price"] - matched["CPU"]["original_price"])
             matched["CPU"] = best_cpu
             upgrades_made = True
-            print(f"⬆️ Upgraded CPU to {best_cpu['name']}!")
 
-    # After upgrading CPU, re-match Motherboard
+    # Re-match Motherboard
     if upgrades_made and matched.get("CPU"):
         cpu_socket = matched["CPU"].get("socket", "").replace("FCLGA", "LGA").replace(" ", "")
         compatible_mobos = motherboard_data[motherboard_data["socket"] == cpu_socket]
 
-        print(f"🧪 CPU after upgrade: {matched['CPU']['name']} with socket {cpu_socket}")
-        print(f"🧪 Compatible motherboards found: {len(compatible_mobos)}")
-
         if not compatible_mobos.empty:
             best_mobo = compatible_mobos.sort_values("original_price").iloc[0].to_dict()
             matched["Motherboard"] = best_mobo
-            print(f"🔄 Re-matched Motherboard after CPU upgrade: {best_mobo['name']}")
 
-            # ✅ Re-match RAM immediately based on new Motherboard
             ddr_type = best_mobo.get("memory_type", "DDR4")
             if "DDR5" in ddr_type.upper():
                 ram_source = ram_ddr5
@@ -103,9 +97,8 @@ def upgrade_build_with_spare_budget(matched, spare_budget, cpu_data, gpu_data, r
             if not ram_source.empty:
                 best_ram = ram_source.sort_values("original_price").iloc[0].to_dict()
                 matched["RAM"] = best_ram
-                print(f"🔄 Re-matched RAM after motherboard upgrade: {best_ram['name']}")
 
-    # ✅ Now try upgrading RAM as normal if spare budget left
+    # Upgrade RAM
     if matched.get("Motherboard") and matched.get("RAM"):
         ddr_type = matched["Motherboard"].get("memory_type", "DDR4")
         if "DDR5" in ddr_type.upper():
@@ -120,11 +113,11 @@ def upgrade_build_with_spare_budget(matched, spare_budget, cpu_data, gpu_data, r
             best_ram = better_ram.iloc[0].to_dict()
             spare_budget -= (best_ram["original_price"] - matched["RAM"]["original_price"])
             matched["RAM"] = best_ram
-            print(f"⬆️ Upgraded RAM to {best_ram['name']}!")
 
     return matched, upgrades_made
 
 def calculate_real_total_cost(build: dict) -> float:
+    """Calculate real total cost."""
     total = 0.0
     for part_key in ["CPU", "GPU", "Motherboard", "RAM", "PSU", "Case"]:
         part = build.get(part_key)
@@ -132,8 +125,8 @@ def calculate_real_total_cost(build: dict) -> float:
             total += part["original_price"]
     return round(total, 2)
 
-# ✅ Main Matching Logic
 def match_requirements_to_components(game_requirements, budget):
+    """Match components to game requirements."""
     cpu_data = load_csv("cpu")
     gpu_data = load_csv("gpu")
     motherboard_data = load_csv("motherboard")
@@ -144,8 +137,6 @@ def match_requirements_to_components(game_requirements, budget):
 
     matched = {"CPU": None, "GPU": None, "Motherboard": None, "RAM": None, "PSU": None, "Case": None}
     total_cost = 0
-
-    print("⚙️ Matching components from requirements...")
 
     # Budget allocation
     allocation = {
@@ -163,14 +154,12 @@ def match_requirements_to_components(game_requirements, budget):
 
     # GPU Matching
     if budget >= 1000:
-        print("🚀 High budget detected — prioritizing best GPU first!")
         good_gpus = gpu_data[gpu_data["original_price"] <= gpu_budget * 1.2]
         if not good_gpus.empty:
             best_gpu = good_gpus.sort_values(by="performance_score", ascending=False).iloc[0].to_dict()
             matched["GPU"] = best_gpu
             total_cost += best_gpu["original_price"]
             cpu_budget = budget * 0.20
-            print(f"⚡ Selected GPU: {best_gpu['name']} | Adjusted CPU budget: {cpu_budget:.2f}")
 
     if matched["GPU"] is None:
         affordable_gpus = gpu_data[gpu_data["original_price"] <= gpu_budget]
@@ -222,9 +211,8 @@ def match_requirements_to_components(game_requirements, budget):
         matched["Case"] = case_data.sort_values("original_price").iloc[0].to_dict()
         total_cost += matched["Case"]["original_price"]
 
-    # Spare Budget (handled separately in upgrade_build_with_spare_budget)
+    # Spare Budget upgrade
     spare_budget = budget - total_cost
-    print(f"🧩 Spare Budget: {spare_budget:.2f}")
 
     if spare_budget >= 100:
         matched, upgrades_made = upgrade_build_with_spare_budget(

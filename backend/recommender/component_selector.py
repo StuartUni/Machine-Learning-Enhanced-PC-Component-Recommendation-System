@@ -1,7 +1,14 @@
-# Created by: Stuart Smith, Student ID: S2336002
-# Date Created: 2025-04-02
-# Description: Contains logic to select components based on allocated budgets and filtered component data.
-
+"""
+Created by: Stuart Smith
+Student ID: S2336002
+Date Created: 2025-04-02
+Description:
+This module provides functionality to select the best PC components within a specified budget.
+Features:
+- Loads preprocessed component datasets (CPU, GPU, RAM, etc.)
+- Selects highest-value components under allocated budget percentages
+- Applies RAM type selection based on motherboard compatibility
+"""
 import pandas as pd
 import os
 
@@ -25,7 +32,7 @@ for key, filename in COMPONENT_FILES.items():
     if os.path.exists(path):
         df = pd.read_csv(path)
         if "original_price" in df.columns:
-            df["price"] = df["original_price"]  # Ensure price consistency
+            df["price"] = df["original_price"]  
         component_data[key] = df
     else:
         component_data[key] = pd.DataFrame()

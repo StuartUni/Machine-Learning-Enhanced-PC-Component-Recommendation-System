@@ -1,9 +1,16 @@
-# Created by: Stuart Smith
-# Student ID: S2336002
-# Date Created: 28/03/2025
-# Description:
-# Trains a TensorFlow Recommenders (TFRS) model to learn build preferences from user ratings.
-# Can be reused across scripts or executed directly.
+"""
+Created by: Stuart Smith
+Student ID: S2336002
+Date Created: 28/03/2025
+Description:
+This script trains a TensorFlow Recommenders (TFRS) model for learning user PC build preferences.
+Features:
+- Defines a BuildRankingModel using TensorFlow/Keras and TensorFlow Recommenders
+- Loads user rating data from CSV
+- Trains a TFRS model to predict user preferences
+- Evaluates RMSE on training data
+- Saves the trained model for future recommendation use
+"""
 
 import os
 import sys
@@ -16,16 +23,16 @@ from keras.saving import register_keras_serializable
 from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
 
-# ✅ Add backend to sys.path so 'utils' can be resolved when running as standalone
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 BACKEND_DIR = os.path.abspath(os.path.join(CURRENT_DIR, ".."))
 if BACKEND_DIR not in sys.path:
     sys.path.insert(0, BACKEND_DIR)
 
-# ✅ This import should now work
+
 from utils.export_ratings_to_csv import export_ratings_to_csv
 
+# BuildRankingModel definition
 @register_keras_serializable()
 class BuildRankingModel(tfrs.models.Model):
     def __init__(self, user_model=None, build_model=None, rating_model=None, **kwargs):
@@ -76,7 +83,7 @@ class BuildRankingModel(tfrs.models.Model):
             rating_model=tf.keras.utils.deserialize_keras_object(config["rating_model"])
         )
 
-
+# Training function
 def train_model(csv_path, model_output_path):
     df = pd.read_csv(csv_path)
 
@@ -110,8 +117,8 @@ def train_model(csv_path, model_output_path):
     history = model.fit(ratings_ds, epochs=10)
 
 
-    # 🔍 Evaluate RMSE on the same data
-    print("📏 Evaluating RMSE on training ratings...")
+    #  Evaluate RMSE on the same data
+    print(" Evaluating RMSE on training ratings...")
 
     true_ratings = df["rating"].tolist()
     predictions = model({
@@ -120,14 +127,14 @@ def train_model(csv_path, model_output_path):
     }).numpy().flatten().tolist()
 
     rmse = np.sqrt(mean_squared_error(true_ratings, predictions))
-    print(f"✅ TFRS RMSE: {rmse:.4f}")
+    print(f" TFRS RMSE: {rmse:.4f}")
 
     # Save trained model
     model.save(model_output_path)
-    print(f"✅ TFRS model saved to: {model_output_path}")
+    print(f" TFRS model saved to: {model_output_path}")
 
 
-# ✅ CLI usage support
+#  CLI usage support
 if __name__ == "__main__":
     DB_PATH = os.path.join("database", "users.db")
     CSV_PATH = os.path.join("data", "ratings.csv")    

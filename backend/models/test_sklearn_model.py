@@ -18,7 +18,7 @@ import os
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.model_selection import train_test_split
 
-# ✅ Load Model & Scaler
+#  Load Model & Scaler
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODEL_PATH = os.path.join(BASE_DIR, "models/sklearn_recommendation_model.pkl")
 SCALER_PATH = os.path.join(BASE_DIR, "models/scaler.pkl")
@@ -26,7 +26,7 @@ SCALER_PATH = os.path.join(BASE_DIR, "models/scaler.pkl")
 model = joblib.load(MODEL_PATH)
 scaler = joblib.load(SCALER_PATH)
 
-# ✅ Define Data Paths
+#  Define Data Paths
 DATA_DIR = os.path.join(BASE_DIR, "data")
 component_files = {
     "cpu": "preprocessed_filtered_cpu.csv",
@@ -41,7 +41,7 @@ component_files = {
     "cpu_cooler": "preprocessed_filtered_cpu_cooler.csv",
 }
 
-# ✅ Load Datasets
+#  Load Datasets
 dataframes = {}
 for key, filename in component_files.items():
     file_path = os.path.join(DATA_DIR, filename)
@@ -50,7 +50,7 @@ for key, filename in component_files.items():
     else:
         print(f"⚠️ Missing {filename}, skipping.")
 
-# ✅ Feature Selection
+#  Feature Selection
 feature_map = {
     "cpu": ["performance_score", "price"],
     "gpu": ["performance_score", "price"],  
@@ -64,39 +64,39 @@ feature_map = {
     "cpu_cooler": ["price"],
 }
 
-# ✅ Prepare Data for Testing
+#  Prepare Data for Testing
 model_data = pd.DataFrame()
 for key, features in feature_map.items():
     for feature in features:
         if feature in dataframes[key].columns:
             model_data[f"{key}_{feature}"] = dataframes[key][feature]
 
-# ✅ Add budget column for testing
+#  Add budget column for testing
 model_data["budget"] = np.random.randint(500, 5000, size=len(model_data))
 
-# ✅ Normalize Features
+#  Normalize Features
 model_data_scaled = pd.DataFrame(scaler.transform(model_data), columns=model_data.columns)
 
-# ✅ Define Target Variable
+#  Define Target Variable
 model_data_scaled["user_score"] = (
     model_data_scaled["cpu_performance_score"] * 0.35 +
     model_data_scaled["gpu_performance_score"] * 0.5 +  
     model_data_scaled["budget"] * 0.15
 )
 
-# ✅ Train-Test Split
+#  Train-Test Split
 X = model_data_scaled.drop(columns=["user_score"])
 y = model_data_scaled["user_score"]
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# ✅ Model Predictions
+#  Model Predictions
 y_pred = model.predict(X_test)
 
-# ✅ Compute Evaluation Metrics
+#  Compute Evaluation Metrics
 rmse = np.sqrt(mean_squared_error(y_test, y_pred))
 mae = mean_absolute_error(y_test, y_pred)
 
-# ✅ Print Performance Metrics
+#  Print Performance Metrics
 print(f"\n🔹 **Model Evaluation Results**")
-print(f"📉 Root Mean Squared Error (RMSE): {rmse:.4f}")
-print(f"📈 Mean Absolute Error (MAE): {mae:.4f}")
+print(f" Root Mean Squared Error (RMSE): {rmse:.4f}")
+print(f" Mean Absolute Error (MAE): {mae:.4f}")

@@ -27,14 +27,14 @@ from .schemas import UserUpdate
 
 from pydantic import BaseModel
 
-# ✅ Create a simple Pydantic model
+#  Create a simple Pydantic model
 class LoginRequest(BaseModel):
     username: str
     password: str
 
 router = APIRouter(tags=["Authentication"])
 
-# ✅ REGISTER ROUTE
+#  REGISTER ROUTE
 @router.post("/register", response_model=UserResponse)
 def register(user: UserCreate):
     conn = get_db_connection()
@@ -61,7 +61,7 @@ def register(user: UserCreate):
         "role": user.role or "user"
     }
 
-# ✅ LOGIN ROUTE
+#  LOGIN ROUTE
 @router.post("/login")
 def login(form_data: LoginRequest):
     conn = get_db_connection()
@@ -80,7 +80,7 @@ def login(form_data: LoginRequest):
     token = create_access_token(data={"sub": user[1]})
     return {"access_token": token, "token_type": "bearer"}
 
-# ✅ UPDATE PROFILE ROUTE
+#  UPDATE PROFILE ROUTE
 @router.patch("/auth/update-profile")
 def update_profile(updates: UserUpdate, current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
@@ -124,9 +124,9 @@ def update_profile(updates: UserUpdate, current_user: dict = Depends(get_current
     conn.commit()
     conn.close()
 
-    return {"message": "✅ Profile updated successfully."}
+    return {"message": " Profile updated successfully."}
 
-# ✅ DELETE OWN ACCOUNT
+#  DELETE OWN ACCOUNT
 @router.delete("/auth/delete-account")
 def delete_own_account(current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
@@ -137,9 +137,9 @@ def delete_own_account(current_user: dict = Depends(get_current_user)):
     conn.commit()
     conn.close()
 
-    return {"message": f"✅ Your account '{current_user['username']}' has been deleted."}
+    return {"message": f" Your account '{current_user['username']}' has been deleted."}
 
-# ✅ GET PROFILE ROUTE
+#  GET PROFILE ROUTE
 @router.get("/me", response_model=UserResponse)
 def get_profile(current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
@@ -159,7 +159,7 @@ def get_profile(current_user: dict = Depends(get_current_user)):
         "saved_builds": saved_builds
     }
 
-# ✅ SAVE MULTIPLE BUILDS
+#  SAVE MULTIPLE BUILDS
 @router.post("/save_build")
 def save_build(build: dict = Body(...), current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
@@ -183,9 +183,9 @@ def save_build(build: dict = Body(...), current_user: dict = Depends(get_current
     conn.commit()
     conn.close()
 
-    return {"message": "✅ Build saved successfully!"}
+    return {"message": " Build saved successfully!"}
 
-# ✅ GET MULTIPLE SAVED BUILDS
+#  GET MULTIPLE SAVED BUILDS
 @router.get("/my_builds")
 def get_saved_builds(current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
@@ -207,7 +207,7 @@ def get_saved_builds(current_user: dict = Depends(get_current_user)):
 
     return {"saved_builds": builds}
 
-# ✅ DELETE SAVED BUILD
+#  DELETE SAVED BUILD
 @router.delete("/delete_build/{build_id}")
 def delete_saved_build(build_id: str, current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
@@ -234,9 +234,9 @@ def delete_saved_build(build_id: str, current_user: dict = Depends(get_current_u
     conn.commit()
     conn.close()
 
-    return {"message": f"✅ Build '{build_id}' deleted successfully."}
+    return {"message": f" Build '{build_id}' deleted successfully."}
 
-# ✅ RATE BUILD
+#  RATE BUILD
 @router.post("/rate-build")
 def rate_build(rating: BuildRating, current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
@@ -251,20 +251,20 @@ def rate_build(rating: BuildRating, current_user: dict = Depends(get_current_use
             SET rating = ?, timestamp = ?
             WHERE user_id = ? AND build_id = ?
         ''', (rating.rating, datetime.utcnow().isoformat(), current_user["id"], rating.build_id))
-        message = f"✅ Updated rating for build {rating.build_id}."
+        message = f" Updated rating for build {rating.build_id}."
     else:
         cursor.execute('''
             INSERT INTO ratings (user_id, build_id, rating, timestamp)
             VALUES (?, ?, ?, ?)
         ''', (current_user["id"], rating.build_id, rating.rating, datetime.utcnow().isoformat()))
-        message = f"✅ New rating submitted for build {rating.build_id}."
+        message = f" New rating submitted for build {rating.build_id}."
 
     conn.commit()
     conn.close()
 
     return {"message": message}
 
-# ✅ GET USER RATINGS
+#  GET USER RATINGS
 @router.get("/get-ratings")
 def get_user_ratings(current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
@@ -292,5 +292,5 @@ def get_user_ratings(current_user: dict = Depends(get_current_user)):
 
     return {"user": current_user["username"], "ratings": ratings}
 
-# ✅ Export router
+# Export router
 auth_router = router

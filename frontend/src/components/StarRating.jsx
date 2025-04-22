@@ -6,7 +6,7 @@
 
 import React, { useState } from "react";
 
-function StarRating({ rating, onRatingChange }) {   // ✅ Accepts rating and onRatingChange
+function StarRating({ rating, onRatingChange }) {   
   const [hovered, setHovered] = useState(0);
 
   const handleMouseEnter = (index) => {
@@ -18,7 +18,7 @@ function StarRating({ rating, onRatingChange }) {   // ✅ Accepts rating and on
   };
 
   const handleClick = (index) => {
-    onRatingChange(index);   // ✅ correctly call onRatingChange
+    onRatingChange(index);   
   };
 
   return (

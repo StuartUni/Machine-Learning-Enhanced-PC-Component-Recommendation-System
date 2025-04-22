@@ -1,3 +1,17 @@
+"""
+Created by: Stuart Smith
+Student ID: S2336002
+Date Created: 2025-04-08
+Description:
+This module generates hybrid PC build recommendations by combining content-based and collaborative filtering.
+Features:
+- Loads trained TensorFlow Recommenders (TFRS) model and labeled build data
+- Supports recommendations based on budget, use case, and game requirements
+- Matches gaming queries to TF-IDF or Steam API requirements
+- Provides top-k collaborative filtering fallback recommendations
+- Finalizes and formats the recommended PC builds with component details and total price
+"""
+
 
 import os
 import sys
@@ -7,12 +21,12 @@ import tensorflow as tf
 import uuid
 from tensorflow.keras.models import load_model
 
-# ✅ Set up paths
+#  Set up paths
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 BACKEND_DIR = os.path.abspath(os.path.join(CURRENT_DIR, ".."))
 sys.path.append(BACKEND_DIR)
 
-# ✅ Imports
+#  Imports
 from models.train_tfrs_check import train_if_needed
 from recommender.tfidf_game_matcher import find_best_matching_game, update_tfidf_model
 from recommender.budget_allocator import get_budget_allocation
@@ -22,14 +36,14 @@ from utils.steam_api_fetcher import get_game_system_requirements, save_game_requ
 from utils.fallback_filler import fill_missing_components, component_data
 from models.train_tfrs_model import BuildRankingModel
 
-# ✅ Load models and builds
+#  Load models and builds
 train_if_needed()
 LABELED_PATH = os.path.join(BACKEND_DIR, "data", "builds", "labeled_builds.csv")
 build_df = pd.read_csv(LABELED_PATH)
 TFRS_MODEL_PATH = os.path.join(BACKEND_DIR, "models", "tfrs_model.keras")
 tfrs_model = load_model(TFRS_MODEL_PATH, custom_objects={"BuildRankingModel": BuildRankingModel})
 
-# ✅ Calculate real-world total cost
+#  Calculate real-world total cost
 def calculate_real_total_cost(build: dict) -> float:
     total = 0.0
     for part_key in ["CPU", "GPU", "Motherboard", "RAM", "PSU", "Case"]:
@@ -38,13 +52,13 @@ def calculate_real_total_cost(build: dict) -> float:
             total += part["original_price"]
     return round(total, 2)
 
-
+# Finalize build recommendation
 def clean_and_finalize_recommendation(build: dict, budget: float, allocation: dict) -> dict:
     build["build_id"] = str(uuid.uuid4())
 
     total_cost = calculate_real_total_cost(build)
     
-    # ✅ Manually add Storage and Cooler fixed prices
+    #  Manually added Storage and Cooler fixed prices
     total_cost += 50.00  # storage_price
     total_cost += 30.00  # cpu_cooler_price
 
@@ -59,7 +73,7 @@ def clean_and_finalize_recommendation(build: dict, budget: float, allocation: di
         "ram_name": build.get("RAM", {}).get("name", "Unknown"),
         "ram_price": build.get("RAM", {}).get("original_price", 0),
         "storage_name": "500GB SSD",
-        "storage_price": 50.00,  # fallback
+        "storage_price": 50.00,  
         "psu_name": build.get("PSU", {}).get("name", "Unknown"),
         "psu_price": build.get("PSU", {}).get("original_price", 0),
         "case_name": build.get("Case", {}).get("name", "Unknown"),
@@ -73,7 +87,7 @@ def clean_and_finalize_recommendation(build: dict, budget: float, allocation: di
         "total_cost": round(total_cost, 2)
     }
 
-# ✅ Collaborative recommendations
+#  Collaborative recommendations
 def get_top_k_collab_builds(user_id: str, budget: float, k=3):
     try:
         _, top_build_ids_tensor = tfrs_model.recommend(tf.constant([user_id]), k=k)
@@ -91,10 +105,10 @@ def get_top_k_collab_builds(user_id: str, budget: float, k=3):
                 })
         return collab_builds
     except Exception as e:
-        print(f"⚠️ Collaborative filtering failed: {e}")
+        print(f" Collaborative filtering failed: {e}")
         return []
 
-# ✅ Hybrid recommender main logic
+#  Hybrid recommender main logic
 def get_hybrid_recommendation(user_input: dict) -> dict:
     budget = user_input.get("budget", 1000)
     query = user_input.get("query", "general").lower()
@@ -113,13 +127,13 @@ def get_hybrid_recommendation(user_input: dict) -> dict:
     NON_GAMING_QUERIES = ["general", "work", "school"]
     if query in NON_GAMING_QUERIES:
         allocation = get_budget_allocation(query)
-        print(f"🛠 Using content-based filtering for non-gaming use case: {query}")
-        print(f"🔍 Budget Allocation for {query}: {allocation}")
+        print(f" Using content-based filtering for non-gaming use case: {query}")
+        print(f" Budget Allocation for {query}: {allocation}")
 
         
         build_response = recommend_build_from_features(use_case=query, budget=budget, allocation=allocation)
 
-        build = build_response["build"]  # ✅ Extract the actual build
+        build = build_response["build"]  
         cleaned = clean_and_finalize_recommendation(build, budget, allocation)
 
         result = {
@@ -134,13 +148,13 @@ def get_hybrid_recommendation(user_input: dict) -> dict:
 
         return result
 
-    # 🎮 Gaming flow
+    #  Gaming flow
     matched_game = find_best_matching_game(query)
     if not matched_game:
-        print("🔍 No TF-IDF match — checking Steam API...")
+        print(" No TF-IDF match — checking Steam API...")
         game_requirements = get_game_system_requirements(query, budget)
         if "error" in game_requirements:
-            print(f"❌ Game not found: {game_requirements['error']}")
+            print(f" Game not found: {game_requirements['error']}")
             return {
                 "use_case": query,
                 "mode": mode,
@@ -152,13 +166,13 @@ def get_hybrid_recommendation(user_input: dict) -> dict:
         save_game_requirements(matched_game, game_requirements)
         update_tfidf_model()
 
-    print(f"🎮 Matched Game: {matched_game} — retrieving requirements...")
+    print(f" Matched Game: {matched_game} — retrieving requirements...")
     game_requirements = get_game_system_requirements(matched_game, budget)
     allocation = get_budget_allocation("gaming")
-    print(f"🔍 Budget Allocation for {matched_game}: {allocation}")
+    print(f" Budget Allocation for {matched_game}: {allocation}")
 
     if "error" in game_requirements:
-        print(f"❌ Steam API error after match: {game_requirements['error']}")
+        print(f" Steam API error after match: {game_requirements['error']}")
         return {
             "use_case": matched_game,
             "mode": mode,
@@ -167,20 +181,20 @@ def get_hybrid_recommendation(user_input: dict) -> dict:
             "total_cost": 0
         }
 
-    print("⚙️ Matching components from requirements...")
+    print(" Matching components from requirements...")
     compatible_parts, raw_total = match_requirements_to_components(
         game_requirements.get("recommended_requirements", {}), budget
     )
 
-    print(f"🔍 Selected Compatible Parts: {compatible_parts}")
-    print(f"🔍 Raw Total Price: {raw_total}")
+    print(f" Selected Compatible Parts: {compatible_parts}")
+    print(f" Raw Total Price: {raw_total}")
 
 
     build = compatible_parts
 
     final_cleaned = clean_and_finalize_recommendation(build, budget, allocation)
 
-    # ✅ Final Result
+    #  Final Result
     result = {
         "use_case": matched_game,
         "mode": mode,

@@ -1,119 +1,14 @@
-
-
-# # Created by: Stuart Smith
-# # Student ID: S2336002
-# # Date Created: 2025-04-07
-# # Description:
-# # Loads and runs a content-based recommendation model using cosine similarity
-# # on a set of labeled builds (generated combinations of compatible components).
-# # Supports both: (1) feature-based cosine similarity, and (2) use-case budget filtering.
-# # Now returns full component objects to match gaming structure.
-
-# import os
-# import joblib
-# import pandas as pd
-# import numpy as np
-
-# BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# SCALER_PATH = os.path.join(BASE_DIR, "models", "content_scaler.pkl")
-# BUILD_DATA_PATH = os.path.join(BASE_DIR, "data", "builds", "labeled_builds.csv")
-# DATA_DIR = os.path.join(BASE_DIR, "data")
-
-# scaler = joblib.load(SCALER_PATH)
-# build_df = pd.read_csv(BUILD_DATA_PATH)
-
-# FEATURE_COLUMNS = ["cpu_score", "gpu_score", "ram_gb", "storage_gb", "price"]
-
-# component_files = {
-#     "cpu": "preprocessed_filtered_cpu.csv",
-#     "gpu": "preprocessed_filtered_gpu.csv",
-#     "motherboard": "preprocessed_filtered_motherboard.csv",
-#     "power_supply": "preprocessed_filtered_power_supply.csv",
-#     "case": "preprocessed_filtered_case.csv",
-#     "cpu_cooler": "preprocessed_filtered_cpu_cooler.csv",
-#     "ram_ddr4": "preprocessed_filtered_ram_ddr4.csv",
-#     "ram_ddr5": "preprocessed_filtered_ram_ddr5.csv",
-#     "storage": "preprocessed_filtered_storage.csv"
-# }
-
-# # ✅ Mapping part names to proper keys
-# PART_MAPPING = {
-#     "cpu": "CPU",
-#     "gpu": "GPU",
-#     "motherboard": "Motherboard",
-#     "power_supply": "PSU",
-#     "case": "Case",
-#     "ram_ddr4": "RAM",
-#     "ram_ddr5": "RAM",
-#     "storage": "Storage",
-# }
-
-# def recommend_build_from_features(user_features=None, use_case=None, budget=None, allocation=None, top_k=1):
-#     if user_features:
-#         input_df = pd.DataFrame([user_features])
-#         scaled_input = scaler.transform(input_df)
-#         filtered_builds = build_df[build_df["price"] <= user_features["price"]]
-#         if filtered_builds.empty:
-#             print("⚠️ No builds under budget found — using full list as fallback.")
-#             filtered_builds = build_df
-
-#         scaled_builds = scaler.transform(filtered_builds[FEATURE_COLUMNS])
-#         distances = np.linalg.norm(scaled_builds - scaled_input, axis=1)
-#         filtered_builds["similarity"] = -distances
-#         top_builds = filtered_builds.sort_values("similarity", ascending=False).head(top_k)
-#         return top_builds.to_dict(orient="records")
-
-#     if use_case and budget and allocation:
-#         component_data = {}
-#         for key, file in component_files.items():
-#             path = os.path.join(DATA_DIR, file)
-#             if os.path.exists(path):
-#                 df = pd.read_csv(path)
-#                 component_data[key] = df[df["original_price"] <= budget * allocation.get(key, 0.1)]
-#             else:
-#                 component_data[key] = pd.DataFrame()
-
-#         if not component_data["motherboard"].empty:
-#             memory_type = component_data["motherboard"].iloc[0]["memory_type"]
-#             ram_type = "ram_ddr5" if "DDR5" in memory_type.upper() else "ram_ddr4"
-#             component_data["ram"] = component_data.get(ram_type, pd.DataFrame())
-#         else:
-#             component_data["ram"] = component_data.get("ram_ddr4", pd.DataFrame())
-
-#         build = {}
-#         total = 0
-
-#         for part, df in component_data.items():
-#             if not df.empty:
-#                 best = df.sort_values("original_price", ascending=False).iloc[0]
-#                 part_key = PART_MAPPING.get(part)
-#                 if part_key:
-#                     build[part_key] = best.to_dict()  # ✅ Save full object (name, price, etc.)
-#                     total += best["original_price"]
-
-#         build["Storage_fixed"] = {"name": "500GB SSD", "original_price": 50.00}  # ✅ Manual
-#         build["CpuCooler_fixed"] = {"name": "Stock Cooler", "original_price": 30.00}  # ✅ Manual
-
-#         # 🎯 Calculate final total
-#         total += 50.00  # storage
-#         total += 30.00  # cpu cooler
-
-#         return {"build": build, "total": round(total, 2)}
-
-#     raise ValueError("❌ Invalid arguments. Provide either user_features or (use_case + budget + allocation).")
-
-
-
-
-
-# Created by: Stuart Smith
-# Student ID: S2336002
-# Date Created: 2025-04-07
-# Description:
-# Loads and runs a content-based recommendation model using cosine similarity
-# on a set of labeled builds (generated combinations of compatible components).
-# Supports feature-based cosine similarity for gaming and
-# ensures CPU-Motherboard-RAM compatibility for non-gaming (General/Work/School).
+"""
+Created by: Stuart Smith
+Student ID: S2336002
+Date Created: 2025-04-07
+Description:
+This module generates content-based PC build recommendations.
+Features:
+- Uses cosine similarity on labeled builds to recommend based on user features
+- Assembles manual builds under budget constraints for non-gaming use cases
+- Ensures CPU-Motherboard-RAM compatibility when building manually
+"""
 
 import os
 import joblib
@@ -159,7 +54,7 @@ def recommend_build_from_features(user_features=None, use_case=None, budget=None
         scaled_input = scaler.transform(input_df)
         filtered_builds = build_df[build_df["price"] <= user_features["price"]]
         if filtered_builds.empty:
-            print("⚠️ No builds under budget found — using full list as fallback.")
+            print(" No builds under budget found — using full list as fallback.")
             filtered_builds = build_df
 
         scaled_builds = scaler.transform(filtered_builds[FEATURE_COLUMNS])
@@ -169,7 +64,7 @@ def recommend_build_from_features(user_features=None, use_case=None, budget=None
         return top_builds.to_dict(orient="records")
 
     if use_case and budget and allocation:
-        # ✅ Load component datasets
+        #  Load component datasets
         component_data = {}
         for key, file in component_files.items():
             path = os.path.join(DATA_DIR, file)
@@ -183,8 +78,8 @@ def recommend_build_from_features(user_features=None, use_case=None, budget=None
         total = 0.0
         
 
-        # ✅ 1. Pick best CPU first
-        # ✅ Exclude LGA1851 CPUs before selection
+        #  1. Pick best CPU first
+        #  Exclude LGA1851 CPUs before selection
         if not component_data["cpu"].empty:
             cpu_df = component_data["cpu"]
             cpu_df = cpu_df[~cpu_df["socket"].str.replace(" ", "").str.upper().str.contains("LGA1851")]
@@ -194,9 +89,9 @@ def recommend_build_from_features(user_features=None, use_case=None, budget=None
                 total += best_cpu["original_price"]
                 cpu_socket = best_cpu.get("socket", "").replace("FCLGA", "LGA").replace(" ", "").upper()
             else:
-                print("⚠️ No CPUs available after filtering out LGA1851!")
+                print(" No CPUs available after filtering out LGA1851!")
 
-        # ✅ 2. Pick compatible Motherboard based on CPU socket
+        #  2. Pick compatible Motherboard based on CPU socket
         if not component_data["motherboard"].empty:
             compatible_mobos = component_data["motherboard"]
             compatible_mobos["socket_clean"] = compatible_mobos["socket"].str.replace(" ", "").str.upper()
@@ -208,15 +103,15 @@ def recommend_build_from_features(user_features=None, use_case=None, budget=None
                 build["Motherboard"] = best_mobo.to_dict()
                 total += best_mobo["original_price"]
             else:
-                print(f"⚠️ No compatible motherboard found for CPU socket {cpu_socket}!")
+                print(f" No compatible motherboard found for CPU socket {cpu_socket}!")
 
-        # ✅ 3. Pick GPU
+        #  3. Pick GPU
         if not component_data["gpu"].empty:
             best_gpu = component_data["gpu"].sort_values("original_price", ascending=False).iloc[0]
             build["GPU"] = best_gpu.to_dict()
             total += best_gpu["original_price"]
 
-        # ✅ 4. RAM - Match DDR4 or DDR5 based on Motherboard
+        #  4. RAM - Match DDR4 or DDR5 based on Motherboard
         ram_type = "ram_ddr4"
         if build.get("Motherboard") and "memory_type" in build["Motherboard"]:
             if "DDR5" in str(build["Motherboard"]["memory_type"]).upper():
@@ -228,25 +123,25 @@ def recommend_build_from_features(user_features=None, use_case=None, budget=None
             build["RAM"] = best_ram.to_dict()
             total += best_ram["original_price"]
 
-        # ✅ 5. PSU
+        #  5. PSU
         if not component_data["power_supply"].empty:
             best_psu = component_data["power_supply"].sort_values("original_price", ascending=False).iloc[0]
             build["PSU"] = best_psu.to_dict()
             total += best_psu["original_price"]
 
-        # ✅ 6. Case
+        #  6. Case
         if not component_data["case"].empty:
             best_case = component_data["case"].sort_values("original_price", ascending=False).iloc[0]
             build["Case"] = best_case.to_dict()
             total += best_case["original_price"]
 
-        # ✅ 7. Manual add Storage and CPU Cooler
+        #  7. Manual add Storage and CPU Cooler
         build["Storage_fixed"] = {"name": "500GB SSD", "original_price": 50.00}
         build["CpuCooler_fixed"] = {"name": "Stock Cooler", "original_price": 30.00}
         total += 50.00
         total += 30.00
 
-        # ✅ Return
+        #  Return
         return {"build": build, "total": round(total, 2)}
 
-    raise ValueError("❌ Invalid arguments. Provide either user_features or (use_case + budget + allocation).")
+    raise ValueError(" Invalid arguments. Provide either user_features or (use_case + budget + allocation).")

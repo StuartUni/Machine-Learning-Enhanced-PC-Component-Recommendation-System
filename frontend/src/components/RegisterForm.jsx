@@ -4,13 +4,13 @@
 // Description: Handles user registration via FastAPI backend (with Toastify notifications and redirect to login).
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";  // ✅ Import navigate
+import { useNavigate } from "react-router-dom";  
 import { registerUser } from "../api";
 import { toast } from "react-toastify"; 
 
 export default function RegisterForm() {
   const [form, setForm] = useState({ username: "", email: "", password: "" });
-  const navigate = useNavigate();  // ✅ Setup navigate()
+  const navigate = useNavigate(); 
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -22,7 +22,7 @@ export default function RegisterForm() {
 
       toast.success(`✅ Registered as ${data.username}`);
 
-      // ✅ Wait 1.2 seconds, then redirect to login page
+      //  Wait 1.2 seconds, then redirect to login page
       setTimeout(() => {
         navigate("/login");
       }, 1200);

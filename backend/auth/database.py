@@ -14,12 +14,12 @@ It:
 import sqlite3
 import os
 
-# ✅ Define database file path
+#  Define database file path
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_DIR = os.path.join(BASE_DIR, "database")
 DB_PATH = os.path.join(DB_DIR, "users.db")
 
-# ✅ Ensure database directory exists
+#  Ensure database directory exists
 os.makedirs(DB_DIR, exist_ok=True)
 
 def init_db():
@@ -27,7 +27,7 @@ def init_db():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-    # ✅ Create Users Table
+    #  Create Users Table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -39,7 +39,7 @@ def init_db():
         )
     ''')
 
-    # ✅ Create Ratings Table
+    #  Create Ratings Table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS ratings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -54,12 +54,12 @@ def init_db():
 
     conn.commit()
     conn.close()
-    print("✅ Database initialized successfully!")
+    print(" Database initialized successfully!")
 
 def get_db_connection():
     """Returns a connection to the SQLite database."""
     return sqlite3.connect(DB_PATH)
 
-# ✅ Run database initialization when script is executed
+#  Run database initialization when script is executed
 if __name__ == "__main__":
     init_db()

@@ -1,22 +1,23 @@
-# Created by: Stuart Smith
-# Student ID: S2336002
-# Date Created: 2025-04-17
-# Description:
-# Utility module for ensuring that all recommended PC builds are complete.
-# This fallback system fills missing parts (motherboard, PSU, case, cooler, RAM)
-# using preprocessed_filtered component datasets. It ensures real component names
-# are used by selecting the most expensive option under the allocated budget for each category.
-# This supports content-based and hybrid recommendation flows where the ML model
-# may not include all parts in its prediction.
+"""
+Created by: Stuart Smith
+Student ID: S2336002
+Date Created: 2025-04-17
+Description:
+This utility module fills missing components in recommended PC builds using real component datasets.
+Features:
+- Loads motherboard, PSU, case, CPU cooler, and RAM datasets
+- Picks the best available part under budget for missing categories
+- Ensures recommended builds are complete for user presentation
+"""
 
 import os
 import pandas as pd
 
-# ✅ Base paths
+# Define paths
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 
-# ✅ Component dataset files
+# Component dataset files
 COMPONENT_FILES = {
     "motherboard": "preprocessed_filtered_motherboard.csv",
     "power_supply": "preprocessed_filtered_power_supply.csv",
@@ -26,7 +27,7 @@ COMPONENT_FILES = {
     "ram_ddr5": "preprocessed_filtered_ram_ddr5.csv",
 }
 
-# ✅ Load all component data into memory once
+# Load all component data into memory
 component_data = {}
 for key, file in COMPONENT_FILES.items():
     path = os.path.join(DATA_DIR, file)
@@ -37,41 +38,44 @@ for key, file in COMPONENT_FILES.items():
         component_data[key] = df
     else:
         component_data[key] = pd.DataFrame()
-        
-# Log the first few rows of each dataframe to inspect the data
-for key, df in component_data.items():
-    print(f"Component: {key}")
-    print(df.head())  # Log the first 5 rows
 
 def fill_missing_components(build: dict, budget: float, allocation: dict) -> dict:
     """
-    Fills missing components in the recommended build using best real options under budget.
-    Only updates fields that are missing or marked as 'Unknown'.
+    Fills missing components in the recommended build using best available options under budget.
+    
+    Args:
+        build (dict): The partially complete build dictionary.
+        budget (float): Total budget provided by the user.
+        allocation (dict): Budget allocation per component category.
+    
+    Returns:
+        dict: The completed build dictionary.
     """
 
     def pick_best(part, alloc_key):
+        """Selects best component under budget for a part."""
         df = component_data.get(part, pd.DataFrame())
         max_price = budget * allocation.get(alloc_key, 0.1)
         best = df[df["price"] <= max_price].sort_values("price", ascending=False).head(1)
         return best.iloc[0]["name"] if not best.empty else "Unknown"
 
-    # Motherboard
+    # Fill missing motherboard
     if "motherboard_name" not in build or build["motherboard_name"] in ["Unknown", None, ""]:
         build["motherboard_name"] = pick_best("motherboard", "motherboard")
 
-    # PSU
+    # Fill missing PSU
     if "psu_name" not in build or build["psu_name"] in ["Unknown", None, ""]:
         build["psu_name"] = pick_best("power_supply", "power_supply")
 
-    # Case
+    # Fill missing case
     if "case_name" not in build or build["case_name"] in ["Unknown", None, ""]:
         build["case_name"] = pick_best("case", "case")
 
-    # CPU Cooler
+    # Fill missing CPU cooler
     if "cpu_cooler_name" not in build or build["cpu_cooler_name"] in ["Unknown", None, ""]:
         build["cpu_cooler_name"] = pick_best("cpu_cooler", "cpu_cooler")
 
-    # RAM (fallback always assumes DDR4 if no motherboard data)
+    # Fill missing RAM (assumes DDR4 fallback if no info)
     if "ram_name" not in build or build["ram_name"] in ["Unknown", None, ""]:
         build["ram_name"] = pick_best("ram_ddr4", "ram")
 

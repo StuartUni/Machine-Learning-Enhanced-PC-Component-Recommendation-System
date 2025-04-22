@@ -1,15 +1,20 @@
-# Created by: Stuart Smith
-# Student ID: S2336002
-# Date Created: 2025-04-18
-# Description:
-# Generates a new labeled_builds.csv containing simple, clean builds
-# for TFRS or content-based training. Each build includes CPU, GPU, RAM, Storage, and Price.
+"""
+Created by: Stuart Smith
+Student ID: S2336002
+Date Created: 2025-04-18
+Description:
+This script generates a labeled_builds.csv file containing clean synthetic PC builds.
+Features:
+- Creates simple builds with CPU, GPU, RAM, Storage, and calculated price
+- Generates realistic feature values for training recommender models
+- Saves the generated builds to a CSV file for model input
+"""
 
 import os
 import pandas as pd
 import uuid
 
-# ✅ Define example components
+# Define example components
 cpus = [
     {"name": "Intel Core i5-12400F", "performance_score": 0.70},
     {"name": "Intel Core i7-13700K", "performance_score": 0.90},
@@ -34,9 +39,8 @@ storages = [
     {"name": "Crucial P3 500GB NVMe", "storage_gb": 500}
 ]
 
-# ✅ Generate builds
+# Generate builds
 builds = []
-
 for cpu in cpus:
     for gpu in gpus:
         for ram in rams:
@@ -55,16 +59,14 @@ for cpu in cpus:
                         (cpu["performance_score"] + gpu["performance_score"]) * 300 +
                         ram["ram_gb"] * 3 +
                         storage["storage_gb"] * 0.08, 2
-                    )  # Rough simple price formula
+                    )
                 }
                 builds.append(build)
 
-# ✅ Save builds
+# Save builds to CSV
 output_dir = os.path.join("data", "builds")
 os.makedirs(output_dir, exist_ok=True)
 
 output_path = os.path.join(output_dir, "labeled_builds.csv")
 df = pd.DataFrame(builds)
 df.to_csv(output_path, index=False)
-
-print(f"✅ {len(builds)} builds saved to {output_path}")
